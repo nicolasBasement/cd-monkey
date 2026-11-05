@@ -3,7 +3,7 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Environment, Lightformer, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { choreography, DURATION, framing } from "./motion";
+import { choreography, DURATION, framing, fittedZoom, smooth } from "./motion";
 import RevealEffects from "./RevealEffects";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 
@@ -16,6 +16,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
   const time = useRef(0);
   const foil = useMemo(() => ({ value: -4 }), []);
   const finished = useRef(false);
+  const zoom = useRef<number | null>(null);
   const { camera, pointer, size, gl } = useThree();
   const drag = useRef({ active: false, x: 0, y: 0, yaw: 0, pitch: 0, currentYaw: 0, currentPitch: 0 });
   const priorKey = useRef(rotationKey);
@@ -109,7 +110,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
       if (t >= DURATION) disc.quaternion.premultiply(manualRotation);
     });
     foil.value = -4 + m.foil * 8;
-    const idle = reduced ? 0 : Math.sin(state.clock.elapsedTime * 0.65) * 0.025;
+    const idle = reduced ? 0 : Math.sin(state.clock.elapsedTime * 0.65) * 0.025 * (1 - smooth((t - 5.4) / 1.1));
     rig.current.rotation.set(0.06 + m.shake, -0.24 + m.shake * 1.8 + (!run ? pointer.x * 0.08 : 0), -0.10 + m.shake);
     rig.current.position.y = -0.6 + idle - m.anticipation * 0.12;
     const scale = 1 - m.anticipation * 0.035 - m.camera * 0.28;
@@ -143,10 +144,9 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
     }
     const safeHeight = Math.max(140, size.height - 110 - (narrow ? 235 : 245));
     const correction = Math.min(1, (size.width - 48) / (2 * extentX), safeHeight / (2 * extentY));
-    if (correction < 1) {
-      perspective.zoom *= correction * 0.97;
-      perspective.updateProjectionMatrix();
-    }
+    zoom.current = fittedZoom(fit.zoom, correction, reduced ? null : zoom.current, delta);
+    perspective.zoom = zoom.current;
+    perspective.updateProjectionMatrix();
     if (glow.current) glow.current.intensity = 0.05 + m.charge * 8 + m.flash * 12;
     if (run && t >= DURATION && !finished.current) { finished.current = true; onComplete(); }
   });

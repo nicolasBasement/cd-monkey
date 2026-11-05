@@ -51,8 +51,6 @@ export default function Experience() {
   return <main className={`experience ${phase}`}>
     <div className="ambient" aria-hidden="true" />
     <header>
-      <a className="wordmark" href="/" aria-label="The vault, inicio"><span className="mark">v.</span> the vault<span className="wordmark-dot">®</span></a>
-      <span className="header-note">Objetos que guardan historias.</span>
       <button className="sound-button" onClick={toggleSound} aria-pressed={sound} aria-label={sound ? "Desactivar sonido" : "Activar sonido"}>
         <span className={`wave ${sound ? "active" : ""}`} aria-hidden="true">{[0,1,2,3,4].map(i => <i key={i} />)}</span>
         Sonido {sound ? "on" : "off"}
@@ -63,7 +61,6 @@ export default function Experience() {
       <h1>Un clásico. Un tesoro.</h1>
       <p>Abrí la caja. Volvé a descubrirlo.</p>
     </section>
-    <div className="large-type" aria-hidden="true">UNBOX</div>
     <section className="stage" tabIndex={opened ? 0 : -1}
       aria-label={opened ? "Disco 3D. Arrastralo para girar, o usá las flechas izquierda y derecha." : "Caja de Monkey Island en 3D. Usá el botón Abrir la caja."}
       onKeyDown={e => {

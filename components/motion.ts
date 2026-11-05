@@ -44,3 +44,12 @@ export function framing(width: number, height: number) {
     offsetY: (bottom - top) / 2,
   };
 }
+
+// Keep the margin continuous when the projected bounds cross the fit threshold.
+// Recover toward a closer framing slowly; never ease past the safe zoom.
+export function fittedZoom(base: number, correction: number, previous: number | null, delta: number) {
+  const safe = base * 0.97 * Math.min(1, correction);
+  if (previous === null) return safe;
+  const follow = 1 - Math.exp(-Math.max(0, delta) * 4);
+  return Math.min(safe, previous + (safe - previous) * follow);
+}

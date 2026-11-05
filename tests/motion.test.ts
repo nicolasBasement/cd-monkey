@@ -54,3 +54,22 @@ test("disc holds edge-on before the final reveal turn", () => {
   assert.equal(choreography(3.15).turn, Math.PI / 2);
   assert.ok(Math.abs(choreography(REVEAL_AT).turn - Math.PI * 2) < 1e-12);
 });
+
+test("safe camera zoom is continuous at the fit threshold (no 3% snap)", async () => {
+  const { fittedZoom } = await import("../components/motion.ts");
+  const below = fittedZoom(.76, .999999, null, 1/60);
+  const above = fittedZoom(.76, 1.000001, null, 1/60);
+  assert.ok(Math.abs(above - below) < .000001);
+});
+test("camera recovers gradually without exceeding safe bounds", async () => {
+  const { fittedZoom } = await import("../components/motion.ts");
+  const zoom = fittedZoom(.76, 1, .5, 1/60);
+  assert.ok(zoom > .5 && zoom < .52);
+  assert.ok(fittedZoom(.76, .6, .7, 1/60) <= .76 * .6 * .97 + 1e-12);
+});
+test("final pose stays continuous through the interaction handoff", () => {
+  const before = choreography(DURATION - .0001);
+  const after = choreography(DURATION + .0001);
+  for(const key of ["lid","disc","tilt","turn","presentation","camera"] as const)
+    assert.ok(Math.abs(before[key] - after[key]) < .000001, key);
+});
