@@ -1,0 +1,170 @@
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/font-0.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/fonts/font-1.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/fonts/font-2.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/fonts/font-3.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/font-4.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/fonts/font-5.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/fonts/font-6.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/fonts/font-7.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/fonts/font-8.ttf) format('truetype');
+}
+:root { color-scheme: dark; --ink: #e9edf7; --muted: #9ca7c5; --gold: #eed3a2; --night: #080e26; }
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--night); }
+body { font-family: "DM Sans", Arial, sans-serif; color: var(--ink); font-size: 14px; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--gold); outline-offset: 7px; }
+button:disabled { cursor: wait; }
+.experience {
+  min-height: 850px; height: 100svh; position: relative; isolation: isolate; overflow: hidden;
+  background: radial-gradient(ellipse at 63% 42%, #263b72 0%, #142247 26%, #0b1530 51%, #080e26 80%);
+}
+.ambient { position: absolute; inset: 0; pointer-events: none; z-index: -1; background: radial-gradient(ellipse at 70% 95%, #73553a1a, transparent 50%); }
+.ambient::after {
+  content: ""; position: absolute; inset: 0; opacity: .035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23n)' opacity='.8' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+}
+header { height: 116px; display: flex; align-items: center; justify-content: space-between; margin: 0 5%; position: relative; z-index: 3; }
+.wordmark { text-decoration: none; color: var(--ink); font-weight: 600; font-size: 23px; letter-spacing: -1px; display: flex; align-items: center; gap: 11px; }
+.mark { font-family: Georgia, serif; font-size: 37px; font-style: italic; color: var(--gold); margin-top: -8px; }
+.wordmark-dot { font-size: 11px; align-self: flex-start; margin-top: 9px; margin-left: -6px; }
+.header-note { font-size: 12px; color: var(--muted); margin-left: -50px; }
+.sound-button { border: 1px solid #8e9cbe40; border-radius: 30px; display: flex; align-items: center; gap: 12px; background: #101b3366; padding: 12px 17px; font-size: 12px; }
+.wave { display: flex; align-items: center; gap: 3px; height: 15px; }
+.wave i { display: block; width: 2px; height: 3px; background: var(--gold); }
+.wave.active i:nth-child(2n) { height: 12px; }
+.wave.active i:nth-child(3) { height: 18px; }
+.wave.active i:first-child, .wave.active i:last-child { height: 7px; }
+.intro { position: absolute; top: 21%; left: 7%; z-index: 2; pointer-events: none; }
+.collection { display: flex; align-items: center; gap: 10px; color: var(--gold); font-size: 12px; margin-bottom: 24px; }
+.collection > span { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 15px #efd3a277; }
+h1 { font-family: "Manrope", Arial, sans-serif; font-size: clamp(34px, 3.6vw, 58px); font-weight: 500; line-height: 1.13; letter-spacing: -2.5px; margin: 0; }
+.intro p { color: var(--muted); font-size: 14px; line-height: 1.85; margin: 23px 0 0; }
+.large-type { font-family: "Manrope", Arial, sans-serif; position: absolute; top: 41%; left: 50%; transform: translate(-50%, -5%); font-size: clamp(150px, 24vw, 390px); font-weight: 800; letter-spacing: -.065em; line-height: 1; color: #8f9ccb0a; white-space: nowrap; user-select: none; }
+.stage { position: absolute; inset: 0; z-index: 1; cursor: pointer; touch-action: pan-y; }
+.artifact-label { position: absolute; right: 7%; top: 64%; z-index: 2; display: flex; align-items: flex-start; gap: 16px; pointer-events: none; }
+.label-line { width: 35px; height: 1px; background: #8796b777; margin-top: 8px; }
+.artifact-label strong { display: block; font-size: 13px; font-weight: 500; line-height: 1.5; }
+.artifact-label div > span { display: block; margin-top: 9px; font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+.interaction { position: absolute; bottom: 114px; left: 50%; transform: translateX(-50%); z-index: 3; display: flex; align-items: center; flex-direction: column; min-width: 300px; text-align: center; }
+.status { color: #bdc7df; font-size: 12px; margin-bottom: 18px; min-height: 17px; }
+.open-button { border: 1px solid #ffe5b580; background: linear-gradient(130deg, #f5e3c3, #dfbd85); color: #272a35; box-shadow: 0 0 35px #e6c98e12, 0 4px 14px #0003; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 18px 26px; border-radius: 6px; min-width: 225px; font-size: 14px; font-weight: 600; transition: box-shadow .25s, transform .25s, opacity .25s; }
+.open-button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 0 45px #e6c98e36, 0 7px 24px #0004; }
+.open-button:disabled { opacity: .6; }
+.button-arrow { margin-left: 14px; font-size: 21px; font-weight: 400; }
+.interaction-hint { font-size: 10px; color: #8492b4; margin-top: 15px; }
+footer { position: absolute; bottom: 0; height: 74px; left: 5%; right: 5%; border-top: 1px solid #8e9cbe26; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #8d9bbb; z-index: 3; }
+footer button { background: none; border: 0; font-size: 11px; color: #c1cbe0; }
+footer button span { margin-left: 10px; color: var(--gold); }
+.edition { font-size: 10px; letter-spacing: .4px; }
+.info-modal { color: var(--ink); margin: auto; background: #14213c; border: 1px solid #7484a644; max-width: 470px; padding: 44px; border-radius: 12px; box-shadow: 0 30px 100px #0006; }
+.info-modal::backdrop { background: #040818bb; backdrop-filter: blur(12px); }
+.info-modal > span { color: var(--gold); font-size: 12px; }
+.info-modal h2 { font-size: 38px; letter-spacing: -1.5px; font-weight: 500; line-height: 1.15; }
+.info-modal p { line-height: 1.8; color: #bdc7df; }
+.info-modal small { font-size: 11px; line-height: 1.7; color: var(--muted); display: block; margin-top: 25px; }
+.close { position: absolute; top: 16px; right: 20px; font-size: 25px; background: none; border: 0; }
+@media (min-width: 1700px) {  .intro { top: 25%; } }
+@media (max-width: 900px) {
+  .intro { left: 6%; top: 19%; } h1 { font-size: 39px; letter-spacing: -1.8px; }
+   .artifact-label { right: 5%; top: 62%; } .header-note { display: none; }
+}
+@media (max-width: 600px) {
+  .experience { min-height: 790px; } header { height: 86px; margin: 0 7%; }
+  .wordmark { font-size: 20px; } .mark { font-size: 32px; } .sound-button { padding: 10px 13px; font-size: 11px; }
+  .intro { top: 125px; left: 8%; } .collection { font-size: 10px; margin-bottom: 17px; }
+  h1 { font-size: 35px; letter-spacing: -1.8px; } .intro p { font-size: 12px; margin-top: 16px; line-height: 1.7; }
+   .large-type { top: 44%; font-size: 31vw; } .artifact-label { display: none; }
+  .interaction { bottom: 99px; } .status { font-size: 11px; margin-bottom: 14px; }
+  .open-button { padding: 15px 24px; min-width: 218px; } .interaction-hint { font-size: 9px; }
+  footer { height: 65px; left: 7%; right: 7%; font-size: 9px; } footer button { font-size: 10px; }
+  .edition { display: none; } .info-modal { padding: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}
+
+/* Full-viewport canvas avoids visible postprocessing boundaries. */
+.stage { inset: 0; }
+/* The artifact is the center of the experience, with safe space around it. */
+.experience { min-height: 720px; background: radial-gradient(ellipse at 50% 46%, #263b72 0%, #142247 28%, #0b1530 55%, #080e26 85%); }
+.intro { top: 125px; left: 50%; width: max-content; max-width: 90%; transform: translateX(-50%); text-align: center; transition: opacity .45s, translate .45s; }
+.collection { justify-content: center; margin-bottom: 15px; }
+h1 { font-size: clamp(30px, 3vw, 45px); letter-spacing: -1.8px; }
+.intro p { margin-top: 12px; }
+.opening .intro, .revealed .intro { opacity: 0; translate: 0 -12px; }
+.large-type { top: 40%; font-size: clamp(150px, 26vw, 390px); }
+.artifact-label { top: auto; bottom: 270px; right: 6%; }
+.stage { inset: 0; touch-action: none; }
+.stage:focus-visible { outline: 1px solid #eed3a255; outline-offset: -85px; }
+@media (max-width: 600px) {
+  .experience { min-height: 720px; }
+  .intro { top: 110px; left: 50%; }
+  h1 { font-size: 30px; letter-spacing: -1.6px; }
+  .intro p { font-size: 12px; }
+  .collection { margin-bottom: 13px; }
+  .large-type { top: 42%; font-size: 31vw; }
+}
+@media (max-height: 760px) and (min-width: 601px) {
+  header { height: 85px; }
+  .intro { top: 95px; }
+  .intro p { display: none; }
+  .interaction { bottom: 95px; }
+}
+
+/* The WebGL layer uses the real viewport, independent of document overflow. */
+.stage { position: fixed; inset: 0; width: 100%; height: 100dvh; overflow: visible; }

@@ -1,0 +1,32 @@
+{
+  "name": "cd-unbox",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack --hostname 0.0.0.0",
+    "build": "next build --webpack",
+    "start": "node scripts/serve.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/motion.test.ts",
+    "optimize-model": "node scripts/optimize-model.mjs"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.0.0",
+    "@react-three/fiber": "^9.0.0",
+    "@react-three/postprocessing": "^3.0.0",
+    "next": "^16.4.5",
+    "postprocessing": "^6.37.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.2",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@types/three": "^0.180.0",
+    "sharp": "^0.35.5",
+    "typescript": "5.8.2"
+  },
+  "type": "module"
+}
