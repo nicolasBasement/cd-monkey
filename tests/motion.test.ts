@@ -19,7 +19,7 @@ test("reveal flash and shockwave start at impact, not before", () => {
 test("motion overshoots then settles to exact final pose", () => {
   assert.ok(choreography(2.45).disc > 1);
   const p = choreography(DURATION);
-  assert.equal(p.disc, 1); assert.equal(p.lid, 1);
+  assert.equal(p.disc, 1); assert.ok(Math.abs(p.lid) < 1e-12);
   assert.equal(p.turn, Math.PI * 2); assert.equal(p.tilt, 1);
   assert.equal(p.foil, 1);
 });
@@ -36,4 +36,21 @@ test("framing reserves room for controls on desktop, mobile and short screens", 
     assert.ok(h * 0.8 * f.zoom <= h - 110 - (w < 700 ? 235 : 245) + 0.01);
     assert.ok(h * 0.52 * f.zoom <= w - 40 + 0.01);
   }
+});
+
+
+test("case closes only after disc clearance, with a positive latch rebound", () => {
+  assert.ok(choreography(4.3).lid > 0.99);
+  assert.ok(choreography(4.3).disc >= 1);
+  assert.ok(choreography(4.8).lid < 0.5);
+  assert.ok(Math.abs(choreography(5.2).lid) < 1e-12);
+  assert.ok(choreography(5.35).lid > 0);
+  assert.ok(Math.abs(choreography(DURATION).lid) < 1e-12);
+  for(let t = 4.35; t < DURATION; t += .02) assert.ok(choreography(t).lid >= -1e-12);
+});
+
+test("disc holds edge-on before the final reveal turn", () => {
+  assert.equal(choreography(2.9).turn, Math.PI / 2);
+  assert.equal(choreography(3.15).turn, Math.PI / 2);
+  assert.ok(Math.abs(choreography(REVEAL_AT).turn - Math.PI * 2) < 1e-12);
 });

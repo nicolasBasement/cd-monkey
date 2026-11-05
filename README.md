@@ -1,6 +1,6 @@
 # The vault — CD reveal
 
-Experiencia de apertura hecha con Next.js, React Three Fiber y Three.js. Usa el modelo de Monkey Island y una animación procedural inspirada en la referencia de loot reveal: carga, anticipación, apertura, giro contenido, impacto y brillo final.
+Experiencia de apertura hecha con Next.js, React Three Fiber y Three.js. Usa el modelo de Monkey Island y una animación procedural inspirada en la referencia de loot reveal: carga, anticipación, apertura, pausa de canto, impacto, cierre de caja con rebote y doble brillo final.
 
 ## Ejecutar
 
@@ -19,7 +19,7 @@ Si la instalación de Sharp intenta compilar contra una instalación global de l
 
 | Archivo | Responsabilidad |
 | --- | --- |
-| `components/motion.ts` | Timeline de 6,2 s, easing, rebotes y momento del impacto. |
+| `components/motion.ts` | Timeline de 6,8 s, easing, rebotes y momento del impacto. |
 | `components/Scene.tsx` | Poses del modelo, cámara, materiales, foil y luces. No reproduce el clip del GLB. |
 | `components/RevealEffects.tsx` | Contorno de carga, rayos, partículas y anillo expansivo. |
 | `components/audio.ts` | Rumble, clic, whoosh y golpe sintetizados; comparte el tiempo de impacto. |

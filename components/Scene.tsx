@@ -12,6 +12,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
   const { scene } = useGLTF("/models/cd.glb");
   const rig = useRef<THREE.Group>(null);
   const glow = useRef<THREE.PointLight>(null);
+  const discAnchor = useMemo(() => new THREE.Vector3(), []);
   const time = useRef(0);
   const foil = useMemo(() => ({ value: -4 }), []);
   const finished = useRef(false);
@@ -39,7 +40,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
       const material = original.clone();
       if (material.name === "glass") {
         material.envMapIntensity = 0.3;
-        material.roughness = 0.1;
+        material.roughness = 0.015;
       }
       if (material.name === "DefaultMaterial.001") {
         material.transmission = 0;
@@ -67,6 +68,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
       opened: new THREE.Quaternion(-0.4986691475, -0.4985812604, -0.5014076829, 0.5013343692),
       positions: discs.map(d => d.position.clone()),
       rotations: discs.map(d => d.quaternion.clone()),
+      scales: discs.map(d => d.scale.clone()),
     };
   }, [scene, foil]);
   useEffect(() => { onReady(); }, [onReady]);
@@ -97,7 +99,8 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
     manualRotation.setFromEuler(manualEuler);
     model.discs.forEach((disc, i) => {
       disc.position.copy(model.positions[i]);
-      disc.position.y += 0.18317 * m.disc;
+      disc.position.y += 0.18317 * m.disc - 0.035 * m.presentation;
+      disc.scale.copy(model.scales[i]).multiplyScalar(1 + m.presentation * 0.16);
       // Turn the disc upright as it clears the tray, then hold it edge-on
       // before the fast final turn. Both meshes must stay perfectly aligned.
       spin.setFromAxisAngle(axis, m.turn);
@@ -113,7 +116,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
     rig.current.scale.setScalar(scale);
     const narrow = size.width < 700;
     target.set((narrow ? 1.1 : 2.3) - m.camera * (narrow ? 0.5 : 1.7), 5.6 - m.camera * 1.2, (narrow ? 8.5 : 6.3) + m.camera * 1.65);
-    target.z += m.anticipation * 0.25 + m.cameraPunch;
+    target.z += m.anticipation * 0.25 + m.cameraPunch - m.tension * 0.4;
     camera.position.lerp(target, reduced ? 1 : 1 - Math.exp(-delta * 5));
     const perspective = camera as THREE.PerspectiveCamera;
     perspective.fov = 37 - (reduced ? 0 : m.flash * 2);
@@ -126,6 +129,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
     rig.current.updateWorldMatrix(true, true);
     // Exact mesh bounds, including lid overshoot and manual disc rotation.
     // A final projection guard keeps every phase inside the UI's safe area.
+    model.discs[0].getWorldPosition(discAnchor);
     bounds.setFromObject(rig.current, true);
     let extentX = 0, extentY = 0;
     for (let corner = 0; corner < 8; corner++) {
@@ -143,7 +147,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
       perspective.zoom *= correction * 0.97;
       perspective.updateProjectionMatrix();
     }
-    if (glow.current) glow.current.intensity = 1 + m.charge * 8 + m.flash * 40 + m.disc * 3;
+    if (glow.current) glow.current.intensity = 0.05 + m.charge * 8 + m.flash * 12;
     if (run && t >= DURATION && !finished.current) { finished.current = true; onComplete(); }
   });
   function isDisc(e: ThreeEvent<PointerEvent>) {
@@ -180,7 +184,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
       <group scale={22}><primitive object={model.scene} position={[-0.006, -0.075, -0.005]} /></group>
       <pointLight ref={glow} position={[0, 0.4, 0]} color="#ffbb62" distance={8} />
     </group>
-    <RevealEffects time={time} reduced={reduced} />
+    <RevealEffects time={time} reduced={reduced} anchor={discAnchor} />
   </>;
 }
 export default function Scene(props: Props) {

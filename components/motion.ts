@@ -1,5 +1,5 @@
-export const DURATION = 6.2;
-export const REVEAL_AT = 3.35;
+export const DURATION = 6.8;
+export const REVEAL_AT = 3.65;
 export const clamp = (x: number) => Math.max(0, Math.min(1, x));
 export const smooth = (x: number) => { const t = clamp(x); return t * t * (3 - 2 * t); };
 export const easeOut = (x: number) => 1 - Math.pow(1 - clamp(x), 3);
@@ -12,21 +12,25 @@ export function choreography(time: number) {
   const t = Math.max(0, time);
   const anticipation = Math.sin(clamp(t / 1.2) * Math.PI);
   const impact = t - REVEAL_AT;
+  const close = smooth((t - 4.35) / 0.85);
+  const rebound = Math.sin(clamp((t - 5.2) / 0.42) * Math.PI) * 0.045;
   return {
     anticipation,
     charge: smooth(t / 1.1) * (1 - smooth((t - 1.25) / 0.8)),
     shake: (Math.sin(t * 75) + Math.sin(t * 113) * 0.45) * 0.016 * anticipation * smooth(t / 0.45),
-    lid: spring((t - 1.15) / 2.0),
+    lid: spring((t - 1.15) / 2.0) * (1 - close) + rebound,
+    presentation: smooth((t - 4.4) / 1.7),
+    tension: smooth((t - 2.65) / 0.3) * (1 - smooth((t - 3.2) / 0.45)),
     disc: spring((t - 1.95) / 2.1),
     tilt: smooth((t - 2) / 1.3),
     // Slow edge-on anticipation, then a fast turn into the reveal.
-    turn: smooth((t - 2.2) / 1.1) * Math.PI * 0.5 + easeOut((t - 3.3) / 0.4) * Math.PI * 1.5,
+    turn: smooth((t - 2.1) / 0.75) * Math.PI * 0.5 + easeOut((t - 3.2) / 0.45) * Math.PI * 1.5,
     camera: smooth((t - 1.0) / 3.7),
-    cameraPunch: impact < 0 ? 0 : Math.sin(impact * 28) * Math.exp(-impact * 8) * 0.13,
-    flash: impact < 0 ? 0 : Math.exp(-impact * 5),
-    rays: impact < 0 ? 0 : Math.exp(-impact * 1.25),
+    cameraPunch: impact < 0 ? 0 : Math.sin(impact * 28) * Math.exp(-impact * 8) * 0.24,
+    flash: impact < 0 ? 0 : Math.exp(-impact * 4),
+    rays: impact < 0 ? 0 : Math.exp(-impact * 0.95) * (1 - smooth((t - 6) / 0.8)),
     shockwave: clamp(impact / 1.45),
-    foil: smooth((t - 3.65) / 1.35),
+    foil: t < 5.3 ? smooth((t - 3.85) / 1.1) : smooth((t - 5.3) / 1.2),
   };
 }
 
