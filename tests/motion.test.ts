@@ -112,3 +112,12 @@ test("Murray jaw simulates a bounded laugh and rests outside the reveal", async 
   assert.ok(Math.min(...samples) < -.025);
   assert.ok(samples.every(value => value >= -.04 - 1e-10 && value <= .025));
 });
+
+test("disc faces the camera during extraction, before either reveal", () => {
+  for (const variant of ["treasure", "murray"] as const) {
+    assert.equal(choreography(1.95, variant).cameraFacing, 0);
+    assert.ok(choreography(2.6, variant).cameraFacing > .8);
+    assert.equal(choreography(2.8, variant).cameraFacing, 1);
+    assert.equal(choreography(DURATION, variant).cameraFacing, 1);
+  }
+});

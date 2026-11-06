@@ -31,6 +31,7 @@ export function choreography(time: number, variant: RevealVariant = "treasure") 
     tension: smooth((t - 2.65) / 0.3) * (1 - smooth((t - 3.2) / 0.45)),
     disc: spring((t - 1.95) / 2.1),
     tilt: smooth((t - 2) / 1.3),
+    cameraFacing: smooth((t - 2.05) / 0.75),
     // Slow edge-on anticipation, then a fast turn into the reveal.
     turn: haunted ? -Math.PI * 2 * flight : smooth((t - 2.1) / 0.75) * Math.PI * 0.5 + easeOut((t - 3.2) / 0.45) * Math.PI * 1.5,
     camera: smooth((t - 1.0) / 3.7),

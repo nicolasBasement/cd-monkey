@@ -126,6 +126,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
     if (run > 0) time.current = reduced ? DURATION : Math.min(time.current + delta, DURATION);
     const t = run > 0 ? time.current : 0;
     const m = choreography(t, variant);
+    const narrow = size.width < 700;
     model.top.quaternion.slerpQuaternions(model.closed, model.opened, m.lid);
     const follow = reduced ? 1 : 1 - Math.exp(-delta * 16);
     drag.current.currentYaw = THREE.MathUtils.lerp(drag.current.currentYaw, drag.current.yaw, follow);
@@ -134,9 +135,9 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
     manualRotation.setFromEuler(manualEuler);
     model.discs.forEach((disc, i) => {
       disc.position.copy(model.positions[i]);
-      disc.position.x += m.discX;
+      disc.position.x += m.discX + (narrow ? 0 : 0.165) * m.presentation;
       disc.position.z += m.discZ;
-      disc.position.y += 0.18317 * m.disc - 0.035 * m.presentation;
+      disc.position.y += 0.18317 * m.disc + (narrow ? 0.03 : 0.015) * m.presentation;
       disc.scale.copy(model.scales[i]).multiplyScalar(1 + m.presentation * 0.75);
       // Turn the disc upright as it clears the tray, then hold it edge-on
       // before the fast final turn. Both meshes must stay perfectly aligned.
@@ -148,12 +149,12 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
     foil.value = -4 + m.foil * 8;
     const idle = reduced ? 0 : Math.sin(state.clock.elapsedTime * 0.65) * 0.025 * (1 - smooth((t - 5.4) / 1.1));
     rig.current.rotation.set(0.06 + m.shake, -0.24 + m.caseYaw + m.shake * 1.8 + (!run ? pointer.x * 0.08 : 0), -0.10 + m.shake);
-    rig.current.position.y = -0.6 + idle - m.anticipation * 0.12 + m.levitation;
+    rig.current.position.x = (narrow ? 0 : -2.6) * m.presentation;
+    rig.current.position.y = -0.6 - (narrow ? 1.0 : 0.7) * m.presentation + idle - m.anticipation * 0.12 + m.levitation;
     const scale = 1 - m.anticipation * 0.035 - m.camera * 0.28;
     rig.current.scale.setScalar(scale);
     rig.current.updateWorldMatrix(true, true);
     model.discs[0].getWorldPosition(discAnchor);
-    const narrow = size.width < 700;
     target.set((narrow ? 1.1 : 2.3) - m.camera * (narrow ? 0.5 : 1.7), 5.6 - m.camera * 1.2, (narrow ? 8.5 : 6.3) + m.camera * 1.65);
     if (variant === "murray") target.x = -2.3 + m.camera * 2.9;
     target.x = THREE.MathUtils.lerp(target.x, discAnchor.x, m.presentation);
@@ -175,7 +176,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
       disc.parent!.getWorldQuaternion(parentRotation);
       cameraFacing.copy(parentRotation).invert().multiply(camera.quaternion);
       if (t >= DURATION) cameraFacing.multiply(manualRotation);
-      disc.quaternion.slerp(cameraFacing, m.presentation);
+      disc.quaternion.slerp(cameraFacing, m.cameraFacing);
     });
     rig.current.updateWorldMatrix(true, true);
     // Exact mesh bounds, including lid overshoot and manual disc rotation.
@@ -234,7 +235,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
       <group scale={22}><primitive object={model.scene} position={[-0.006, -0.075, -0.005]} /></group>
       <pointLight ref={glow} position={[0, 0.4, 0]} color={variant === "murray" ? "#8ce8da" : "#ffbb62"} distance={8} />
     </group>
-    <RevealEffects variant={variant} time={time} reduced={reduced} anchor={discAnchor} />
+    <RevealEffects caseRig={rig} variant={variant} time={time} reduced={reduced} anchor={discAnchor} />
   </>;
 }
 export default function Scene(props: Props) {

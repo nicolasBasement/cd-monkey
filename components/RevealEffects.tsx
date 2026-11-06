@@ -1,12 +1,12 @@
 "use client";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import * as THREE from "three";
 import MurrayParticles from "./MurrayParticles";
 import { choreography, revealAt, DURATION, smooth, type RevealVariant } from "./motion";
 
-export default function RevealEffects({ variant, time, reduced, anchor }: { variant: RevealVariant; time: { current: number }; reduced: boolean; anchor: THREE.Vector3 }) {
+export default function RevealEffects({ variant, time, reduced, anchor, caseRig }: { caseRig: RefObject<THREE.Group | null>; variant: RevealVariant; time: { current: number }; reduced: boolean; anchor: THREE.Vector3 }) {
   const haunted = variant === "murray";
   const color = useMemo(() => haunted ? new THREE.Color(2.2, 5, 4.2) : new THREE.Color(4, 2.7, 1), [haunted]);
   const rays = useRef<THREE.Mesh>(null);
@@ -70,8 +70,7 @@ export default function RevealEffects({ variant, time, reduced, anchor }: { vari
     }
     if (outline.current) {
       outline.current.visible = !reduced && m.charge > 0.01;
-      outline.current.scale.setScalar(1 - m.anticipation * 0.035);
-      outline.current.position.y = -0.5 - m.anticipation * 0.12;
+      if (caseRig.current) outline.current.matrix.copy(caseRig.current.matrixWorld);
       outline.current.traverse(object => {
         if (object instanceof THREE.Mesh && object.material instanceof THREE.ShaderMaterial) {
           // LineMaterial exposes opacity directly.
@@ -100,7 +99,7 @@ export default function RevealEffects({ variant, time, reduced, anchor }: { vari
   });
   return <>
     {haunted && <MurrayParticles time={time} anchor={anchor} reduced={reduced} />}
-    <group ref={outline} rotation={[0.06, -0.24, -0.10]}>
+    <group ref={outline} matrixAutoUpdate={false}>
       <Line points={[[-1.54, 0, -1.3], [1.45, 0, -1.3], [1.45, 0, 1.4], [-1.54, 0, 1.4], [-1.54, 0, -1.3]]} color={haunted ? color : new THREE.Color(4, 2.2, 0.6)} lineWidth={2.2} transparent toneMapped={false} />
     </group>
     <mesh ref={rays} position={[0, 1.8, -0.75]} renderOrder={-1}>
