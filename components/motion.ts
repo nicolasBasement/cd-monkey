@@ -44,11 +44,11 @@ export function choreography(time: number, variant: RevealVariant = "treasure") 
 
 // Reserve real screen space for the header and controls, not a fixed aspect ratio.
 export function framing(width: number, height: number) {
-  const top = 160;
-  const bottom = 160;
+  const top = 110;
+  const bottom = 80;
   const usableHeight = Math.max(160, height - top - bottom);
   return {
-    zoom: Math.min(0.76, usableHeight / (height * 0.8), (width - 64) / (height * 0.62)),
+    zoom: Math.min(1.2, usableHeight / (height * 0.65), (width - 48) / (height * 0.62)),
     offsetY: (bottom - top) / 2,
   };
 }

@@ -19,7 +19,7 @@ Si la instalación de Sharp intenta compilar contra una instalación global de l
 
 El selector superior permite elegir **A · Tesoro** (apertura dorada) o **B · Murray** (levitación, cámara desde el lado opuesto, trayectoria espiral y apariciones fantasmales). Cambiar de opción cancela la secuencia y el audio anteriores.
 
-No hay botón de apertura: hacer clic en la caja cerrada, o enfocar el visor con Tab y presionar Enter/Espacio. Al terminar, el CD queda centrado en el canvas y se puede arrastrar; otro clic en la caja repite la animación. El aro central tiene un material translúcido separado, no el material opaco del disco.
+No hay botón de apertura: hacer clic en la caja cerrada, o enfocar el visor con Tab y presionar Enter/Espacio. Al terminar, el CD queda ampliado y centrado en X; el movimiento horizontal del mouse lo gira sin pulsar, y en touch se puede arrastrar; otro clic en la caja repite la animación. El aro central tiene un material translúcido separado, no el material opaco del disco.
 
 ## Ajustar la animación
 
@@ -33,7 +33,7 @@ No hay botón de apertura: hacer clic en la caja cerrada, o enfocar el visor con
 | `components/audio.ts` | Rumble, clic, whoosh y golpe sintetizados; comparte el tiempo de impacto. |
 | `components/Experience.tsx` | Estados, replay, sonido, diálogo y accesibilidad. |
 
-Al terminar, se puede arrastrar el CD con mouse o touch sin girar la caja; con el visor enfocado, las flechas izquierda/derecha también lo rotan. El canvas es de viewport completo, sin plano de fondo, y un control de bounds proyectados mantiene todas las piezas dentro del encuadre durante la apertura y la inspección.
+Al terminar, el movimiento horizontal del mouse gira el CD sin girar la caja; en touch se conserva el arrastre; con el visor enfocado, las flechas izquierda/derecha también lo rotan. El canvas es de viewport completo, sin plano de fondo, y un control de bounds proyectados mantiene todas las piezas dentro del encuadre durante la apertura y la inspección.
 
 El modo de movimiento reducido salta a la pose final sin sacudidas, partículas, bloom ni audio de revelación.
 
@@ -59,4 +59,7 @@ Las fuentes se sirven localmente; sus licencias están en `public/fonts/`. No se
 
 ## Imagen de Murray
 
-`public/textures/murray-reference.png` es la captura aportada por el usuario del GIF de Murray de Monkey Island Wiki. El shader oculta el fondo mostaza y recorta el encuadre por UV; el archivo original se mantiene sin editar. La captura es estática: se animan su posición, inclinación y opacidad, no la boca del GIF original. Las cuatro apariciones terminan antes de habilitar la inspección y se omiten con movimiento reducido.
+`public/textures/murray-reference.png` es la captura aportada por el usuario del GIF de Murray de Monkey Island Wiki. El shader oculta el fondo mostaza y recorta el encuadre por UV; el archivo original se mantiene sin editar. La captura es estática: se animan posición, inclinación y opacidad, y se simula una risa desplazando la mandíbula en UV. No reproduce los fotogramas del GIF original. Las cuatro apariciones terminan antes de habilitar la inspección y se omiten con movimiento reducido.
+
+### Descarga HD
+El cierre de ambas variantes alinea el plano del CD con la cámara y muestra el CTA de descarga. Configurá `NEXT_PUBLIC_GAME_DOWNLOAD_URL` con el enlace real antes de compilar; sin enlace se muestra deshabilitado y con “Descarga próximamente”. El giro con mouse/touch continúa disponible sin cursor de doble flecha.

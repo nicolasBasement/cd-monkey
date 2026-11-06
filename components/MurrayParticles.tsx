@@ -15,18 +15,30 @@ const vertexShader = `
 const fragmentShader = `
   uniform sampler2D uMap;
   uniform float uOpacity;
+  uniform float uJaw;
   varying vec2 vUv;
-  void main() {
-    // Sample only the skull area; the supplied screenshot is kept unchanged.
-    vec2 uv = vec2(48./256., 41./281.) + vUv * vec2(142./256., 190./281.);
+  vec4 skull(vec2 localUv) {
+    if(any(lessThan(localUv, vec2(0.))) || any(greaterThan(localUv, vec2(1.)))) return vec4(0.);
+    vec2 uv = vec2(48./256., 41./281.) + localUv * vec2(142./256., 190./281.);
     vec4 pixel = texture2D(uMap, uv);
-    // Neutral bone/outline survive, while the mustard backdrop and mouth gaps disappear.
     float chroma = max(pixel.r, pixel.g) - pixel.b;
     float matte = 1. - smoothstep(.045, .19, chroma);
-    float alpha = pixel.a * matte * uOpacity;
-    if (alpha < .008) discard;
     float gray = dot(pixel.rgb, vec3(.2126, .7152, .0722));
-    gl_FragColor = vec4(vec3(gray) * vec3(1., .98, .90), alpha);
+    return vec4(vec3(gray) * vec3(1., .98, .90), pixel.a * matte);
+  }
+  void main() {
+    // Separate the lower jaw in UV space; preserve the supplied screenshot.
+    const float hinge = .226;
+    vec4 head = skull(vUv);
+    head.a *= step(hinge, vUv.y);
+    vec2 jawUv = vUv + vec2(0., uJaw);
+    vec4 jaw = skull(jawUv);
+    jaw.a *= 1. - step(hinge, jawUv.y);
+    float alpha = jaw.a + head.a * (1. - jaw.a);
+    vec3 color = (jaw.rgb * jaw.a + head.rgb * head.a * (1. - jaw.a)) / max(alpha, .001);
+    alpha *= uOpacity;
+    if(alpha < .008) discard;
+    gl_FragColor = vec4(color, alpha);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
@@ -38,7 +50,7 @@ export default function MurrayParticles({ time, anchor, reduced }: {
   const texture = useTexture("/textures/murray-reference.png");
   const meshes = useRef<(THREE.Mesh | null)[]>([]);
   const materials = useMemo(() => Array.from({ length: MURRAY_COUNT }, () => new THREE.ShaderMaterial({
-    uniforms: { uMap: { value: texture }, uOpacity: { value: 0 } },
+    uniforms: { uMap: { value: texture }, uOpacity: { value: 0 }, uJaw: { value: 0 } },
     vertexShader, fragmentShader, transparent: true, depthWrite: false, toneMapped: false,
   })), [texture]);
   const right = useMemo(() => new THREE.Vector3(), []);
@@ -70,6 +82,7 @@ export default function MurrayParticles({ time, anchor, reduced }: {
       mesh.rotateZ(p.rotation);
       mesh.scale.set(p.size * 142 / 190, p.size, 1);
       materials[i].uniforms.uOpacity.value = p.opacity;
+      materials[i].uniforms.uJaw.value = p.jaw;
     });
   });
   return <group>{materials.map((material, i) =>

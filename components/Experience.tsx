@@ -58,6 +58,7 @@ export default function Experience() {
     });
   }
   const opened = phase === "revealed";
+  const downloadUrl = process.env.NEXT_PUBLIC_GAME_DOWNLOAD_URL;
   return <main className={`experience ${phase} variant-${variant}`}>
     <div className="ambient" aria-hidden="true" />
     <header>
@@ -76,7 +77,7 @@ export default function Experience() {
       <p>{variant === "treasure" ? "Abrí la caja. Volvé a descubrirlo." : "Murray tiene algo que decir al respecto."}</p>
     </section>
     <section className="stage" data-phase={phase} tabIndex={phase === "ready" || opened ? 0 : -1}
-      aria-label={opened ? "Disco 3D. Arrastralo para girar, o usá las flechas izquierda y derecha." : "Caja de Monkey Island en 3D. Hacé clic en la caja o presioná Enter para abrirla."}
+      aria-label={opened ? "Disco 3D. Mové el mouse a izquierda o derecha para girarlo; en touch, arrastrá. También podés usar las flechas." : "Caja de Monkey Island en 3D. Hacé clic en la caja o presioná Enter para abrirla."}
       onKeyDown={e => {
         if ((phase === "ready" || opened) && (e.key === "Enter" || e.key === " ")) {
           e.preventDefault(); open();
@@ -88,13 +89,19 @@ export default function Experience() {
       <SceneBoundary onError={onError}><Scene key={variant} variant={variant} rotationKey={rotationKey} run={run} reduced={reduced} onReady={onReady} onComplete={onComplete} onOpen={open} /></SceneBoundary>
     </section>
     <aside className="artifact-label"><span className="label-line" /><div><strong>The Curse of<br />Monkey Island</strong><span>PC · CD-ROM · 1997</span></div></aside>
-    <section className="interaction">
+    <section className={phase === "loading" || phase === "error" ? "interaction" : "sr-only"}>
       <div className="status" role="status" aria-live="polite">
         {phase === "loading" ? "Preparando tu tesoro…" : phase === "error" ? "No pudimos cargar la escena 3D. Recargá la página con WebGL activado." : phase === "opening" ? "Hay cosas que nunca pierden su magia." : opened ? (variant === "treasure" ? "Bienvenido de vuelta, pirata." : "El tesoro es tuyo. La maldición también.") : "Hacé clic en la caja para abrirla."}
       </div>
       {phase === "error" && <button className="open-button" onClick={() => location.reload()}>Volver a intentar</button>}
-      <span className="interaction-hint">{opened ? "Arrastrá el CD para girarlo. Clic en la caja para repetir." : phase === "opening" ? "Un momento para volver a descubrirlo." : "También podés usar Tab y Enter."}</span>
     </section>
+    {opened && <section className="download-cta" aria-label="Versión HD">
+      <span className="download-eyebrow">El clásico, remasterizado en HD</span>
+      {downloadUrl
+        ? <a className="open-button" href={downloadUrl}>Descargar versión HD</a>
+        : <button className="open-button" disabled aria-describedby="download-pending">Descargar versión HD</button>}
+      {!downloadUrl && <small id="download-pending">Descarga próximamente</small>}
+    </section>}
     <footer><span>Un pequeño ritual. Un gran clásico.</span><button onClick={() => setInfo(true)}>Acerca de esta pieza <span>＋</span></button><span className="edition">Archivo interactivo / 001</span></footer>
     <dialog ref={dialog} className="info-modal" aria-labelledby="info-title" onClose={() => setInfo(false)} onClick={e => { if(e.target === e.currentTarget) { const r = e.currentTarget.getBoundingClientRect(); if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) setInfo(false); } }}>
       <button autoFocus className="close" onClick={() => setInfo(false)} aria-label="Cerrar">×</button>

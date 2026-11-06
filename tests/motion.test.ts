@@ -32,9 +32,9 @@ test("framing reserves room for controls on desktop, mobile and short screens", 
   const { framing } = await import("../components/motion.ts");
   for (const [w, h] of [[1440,960], [1366,768], [390,844], [320,720], [1024,720]]) {
     const f = framing(w, h);
-    assert.ok(f.zoom > 0 && f.zoom <= 0.76);
-    assert.ok(h * 0.8 * f.zoom <= h - 320 + 0.01);
-    assert.ok(h * 0.52 * f.zoom <= w - 40 + 0.01);
+    assert.ok(f.zoom > 0 && f.zoom <= 1.2);
+    assert.ok(h * 0.65 * f.zoom <= h - 190 + 0.01);
+    assert.ok(h * 0.62 * f.zoom <= w - 48 + 0.01);
   }
 });
 
@@ -100,4 +100,15 @@ test("Murray particles stagger, fade, and fully disappear before interaction", a
   }
   assert.equal(murrayParticle(3.95, 0).visible, true);
   assert.equal(murrayParticle(3.95, 3).visible, false);
+});
+
+
+test("Murray jaw simulates a bounded laugh and rests outside the reveal", async () => {
+  const { murrayParticle } = await import("../components/murray-motion.ts");
+  assert.equal(murrayParticle(0, 0).jaw, 0);
+  assert.equal(murrayParticle(DURATION, 0).jaw, 0);
+  const samples = Array.from({length: 100}, (_, i) => murrayParticle(4.2 + i / 100, 0).jaw);
+  assert.ok(Math.max(...samples) > .015);
+  assert.ok(Math.min(...samples) < -.025);
+  assert.ok(samples.every(value => value >= -.04 - 1e-10 && value <= .025));
 });

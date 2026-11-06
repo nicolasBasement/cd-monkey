@@ -20,6 +20,26 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
   const { camera, pointer, size, gl } = useThree();
   const drag = useRef({ active: false, x: 0, y: 0, yaw: 0, pitch: 0, currentYaw: 0, currentPitch: 0 });
   const priorKey = useRef(rotationKey);
+  const hoverX = useRef<number | null>(null);
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const move = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      if (finished.current && !drag.current.active && hoverX.current !== null) {
+        drag.current.yaw += (event.clientX - hoverX.current) * 0.009;
+      }
+      hoverX.current = event.clientX;
+    };
+    const reset = () => { hoverX.current = null; };
+    canvas.addEventListener("pointermove", move);
+    canvas.addEventListener("pointerleave", reset);
+    canvas.addEventListener("pointerenter", reset);
+    return () => {
+      canvas.removeEventListener("pointermove", move);
+      canvas.removeEventListener("pointerleave", reset);
+      canvas.removeEventListener("pointerenter", reset);
+    };
+  }, [gl]);
   useEffect(() => {
     drag.current.yaw += rotationKey - priorKey.current;
     priorKey.current = rotationKey;
@@ -85,7 +105,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
   }, [scene, foil, variant]);
   useEffect(() => { onReady(); }, [onReady]);
   useEffect(() => {
-    time.current = 0; finished.current = false;
+    time.current = 0; finished.current = false; hoverX.current = null;
     Object.assign(drag.current, { active: false, yaw: 0, pitch: 0, currentYaw: 0, currentPitch: 0 });
     gl.domElement.style.cursor = "pointer";
     model.top.quaternion.copy(model.closed);
@@ -98,6 +118,8 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
   const axis = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const spin = useMemo(() => new THREE.Quaternion(), []);
   const face = useMemo(() => new THREE.Quaternion(), []);
+  const cameraFacing = useMemo(() => new THREE.Quaternion(), []);
+  const parentRotation = useMemo(() => new THREE.Quaternion(), []);
 
   useFrame((state, delta) => {
     if (!rig.current) return;
@@ -115,13 +137,13 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
       disc.position.x += m.discX;
       disc.position.z += m.discZ;
       disc.position.y += 0.18317 * m.disc - 0.035 * m.presentation;
-      disc.scale.copy(model.scales[i]).multiplyScalar(1 + m.presentation * 0.16);
+      disc.scale.copy(model.scales[i]).multiplyScalar(1 + m.presentation * 0.75);
       // Turn the disc upright as it clears the tray, then hold it edge-on
       // before the fast final turn. Both meshes must stay perfectly aligned.
       spin.setFromAxisAngle(axis, m.turn);
       disc.quaternion.slerpQuaternions(model.rotations[i], face, m.tilt);
       disc.quaternion.premultiply(spin);
-      if (t >= DURATION) disc.quaternion.premultiply(manualRotation);
+
     });
     foil.value = -4 + m.foil * 8;
     const idle = reduced ? 0 : Math.sin(state.clock.elapsedTime * 0.65) * 0.025 * (1 - smooth((t - 5.4) / 1.1));
@@ -134,17 +156,27 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
     const narrow = size.width < 700;
     target.set((narrow ? 1.1 : 2.3) - m.camera * (narrow ? 0.5 : 1.7), 5.6 - m.camera * 1.2, (narrow ? 8.5 : 6.3) + m.camera * 1.65);
     if (variant === "murray") target.x = -2.3 + m.camera * 2.9;
+    target.x = THREE.MathUtils.lerp(target.x, discAnchor.x, m.presentation);
     target.z += m.anticipation * 0.25 + m.cameraPunch - m.tension * 0.4;
     camera.position.lerp(target, reduced ? 1 : 1 - Math.exp(-delta * 5));
     const perspective = camera as THREE.PerspectiveCamera;
     perspective.fov = 37 - (reduced ? 0 : m.flash * 2);
     const fit = framing(size.width, size.height);
-    perspective.zoom = fit.zoom;
+    const baseZoom = THREE.MathUtils.lerp(Math.min(0.76, fit.zoom), fit.zoom, m.presentation);
+    perspective.zoom = baseZoom;
     perspective.setViewOffset(size.width, size.height, 0, fit.offsetY, size.width, size.height);
     perspective.updateProjectionMatrix();
-    lookPoint.set(0, 0.1 + m.camera * 0.8, 0).lerp(discAnchor, m.presentation);
+    lookPoint.set(discAnchor.x * m.presentation, 0.1 + m.camera * 0.8, discAnchor.z * m.presentation);
     camera.lookAt(lookPoint);
     camera.updateMatrixWorld();
+    // Resolve the final pose in camera space, cancelling the case/GLB parents.
+    // Blend before completion so there is no snap when interaction becomes active.
+    model.discs.forEach(disc => {
+      disc.parent!.getWorldQuaternion(parentRotation);
+      cameraFacing.copy(parentRotation).invert().multiply(camera.quaternion);
+      if (t >= DURATION) cameraFacing.multiply(manualRotation);
+      disc.quaternion.slerp(cameraFacing, m.presentation);
+    });
     rig.current.updateWorldMatrix(true, true);
     // Exact mesh bounds, including lid overshoot and manual disc rotation.
     // A final projection guard keeps every phase inside the UI's safe area.
@@ -160,13 +192,13 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
       extentX = Math.max(extentX, Math.abs(projected.x * size.width / 2));
       extentY = Math.max(extentY, Math.abs(-projected.y * size.height / 2 + fit.offsetY));
     }
-    const safeHeight = Math.max(140, size.height - 320);
+    const safeHeight = Math.max(140, size.height - 190);
     const correction = Math.min(1, (size.width - 48) / (2 * extentX), safeHeight / (2 * extentY));
-    zoom.current = fittedZoom(fit.zoom, correction, reduced ? null : zoom.current, delta);
+    zoom.current = fittedZoom(baseZoom, correction, reduced ? null : zoom.current, delta);
     perspective.zoom = zoom.current;
     perspective.updateProjectionMatrix();
     if (glow.current) glow.current.intensity = 0.05 + m.charge * 8 + m.flash * 12;
-    if (run && t >= DURATION && !finished.current) { finished.current = true; onComplete(); }
+    if (run && t >= DURATION && !finished.current) { finished.current = true; gl.domElement.style.cursor = "default"; onComplete(); }
   });
   function isDisc(e: ThreeEvent<PointerEvent>) {
     return model.discs.includes(e.object);
@@ -190,14 +222,14 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
     e.stopPropagation();
     drag.current.active = false;
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-    gl.domElement.style.cursor = "grab";
+    gl.domElement.style.cursor = "default";
   }
   return <>
     <group ref={rig}
       onClick={(e) => { e.stopPropagation(); if (!finished.current || !model.discs.includes(e.object)) onOpen(); }}
       onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp}
       onPointerCancel={pointerUp}
-      onPointerOver={(e) => { if(finished.current && isDisc(e)) gl.domElement.style.cursor = "grab"; }}
+      onPointerOver={(e) => { if(finished.current && isDisc(e)) gl.domElement.style.cursor = "default"; }}
       onPointerOut={() => { if(!drag.current.active) gl.domElement.style.cursor = finished.current ? "default" : "pointer"; }}>
       <group scale={22}><primitive object={model.scene} position={[-0.006, -0.075, -0.005]} /></group>
       <pointLight ref={glow} position={[0, 0.4, 0]} color={variant === "murray" ? "#8ce8da" : "#ffbb62"} distance={8} />
