@@ -84,10 +84,21 @@ export function cryptAtmosphere(time: number, reduced = false) {
 
 // One material-only accent. No changes to the treasure choreography.
 export function goldFinish(time: number, reduced = false) {
-  const sweep = smooth((time - 4.05) / 1.5);
+  const sweep = smooth((time - 4.35) / 1.65);
   return {
     sweep: -1.6 + sweep * 3.2,
-    reveal: reduced ? 0 : smooth((time - 3.95) / .3) * (1 - smooth((time - 5.45) / .4)),
+    reveal: reduced ? 0 : smooth((time - 4.2) / .3) * (1 - smooth((time - 5.9) / .35)),
     rim: reduced ? 0 : smooth((time - 2) / .8) * (1 - smooth((time - 5.6) / .5)),
+  };
+}
+
+// Secondary waves stay smaller and dimmer than the main 5.05-unit shockwave.
+export function goldEcho(time: number, index: number, reduced = false) {
+  const age = time - REVEAL_AT - (index === 0 ? .7 : 1.15);
+  const progress = clamp(age / 1.1);
+  return {
+    visible: !reduced && age > 0 && age < 1.1,
+    radius: .3 + easeOut(progress) * (index === 0 ? 2.5 : 1.7),
+    opacity: reduced ? 0 : smooth(progress / .15) * (1 - smooth(progress)) * (index === 0 ? .32 : .18),
   };
 }

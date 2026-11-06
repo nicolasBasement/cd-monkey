@@ -5,7 +5,7 @@ import { Line } from "@react-three/drei";
 import * as THREE from "three";
 import CryptAtmosphere from "./CryptAtmosphere";
 import MurrayParticles from "./MurrayParticles";
-import { choreography, revealAt, DURATION, smooth, type RevealVariant } from "./motion";
+import { choreography, goldEcho, revealAt, DURATION, smooth, type RevealVariant } from "./motion";
 
 export default function RevealEffects({ variant, time, reduced, anchor, caseRig }: { caseRig: RefObject<THREE.Group | null>; variant: RevealVariant; time: { current: number }; reduced: boolean; anchor: THREE.Vector3 }) {
   const haunted = variant !== "treasure" && variant !== "gold";
@@ -14,6 +14,7 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
   const color = useMemo(() => haunted ? new THREE.Color(2.2, 5, 4.2) : new THREE.Color(4, 2.7, 1), [haunted]);
   const rays = useRef<THREE.Mesh>(null);
   const ring = useRef<THREE.Mesh>(null);
+  const echoes = useRef<THREE.Group>(null);
   const outline = useRef<THREE.Group>(null);
   const dust = useRef<THREE.Points>(null);
   const glint = useRef<THREE.Sprite>(null);
@@ -75,6 +76,15 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
       ring.current.scale.setScalar(0.25 + m.shockwave * 4.8);
       (ring.current.material as THREE.MeshBasicMaterial).opacity = (1 - m.shockwave) * 0.85;
     }
+    if (echoes.current) {
+      echoes.current.children.forEach((object, index) => {
+        const echo = goldEcho(t, index, reduced);
+        const mesh = object as THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
+        mesh.visible = echo.visible;
+        mesh.scale.setScalar(echo.radius);
+        mesh.material.opacity = echo.opacity;
+      });
+    }
     if (outline.current) {
       outline.current.visible = !cursed && !crypt && !reduced && m.charge > 0.01;
       if (caseRig.current) outline.current.matrix.copy(caseRig.current.matrixWorld);
@@ -130,6 +140,12 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
       <ringGeometry args={[0.972, 1, 128]} />
       <meshBasicMaterial color={haunted ? [2, 5, 4] : [5, 3, 1]} transparent toneMapped={false} depthWrite={false} side={THREE.DoubleSide} />
     </mesh>
+    {variant === "gold" && <group ref={echoes}>
+      {[0, 1].map(index => <mesh key={index} rotation-x={-Math.PI / 2} position={[0, -1.01, 0]} visible={false}>
+        <ringGeometry args={[.975, 1, 128]} />
+        <meshBasicMaterial color={[2.2, 1.3, .4]} transparent opacity={0} toneMapped={false} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>)}
+    </group>}
     <pointLight ref={light} distance={5} color={haunted ? "#a9ffe2" : "#ffe5ab"} intensity={0} />
     <sprite ref={glint} visible={false}>
       <spriteMaterial map={sparkle} color={[5, 4.5, 3.5]} transparent depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} />

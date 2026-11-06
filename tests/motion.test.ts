@@ -203,3 +203,19 @@ test("gold keeps treasure motion and adds only a bounded, non-looping material a
   assert.equal(goldFinish(DURATION).rim,0);
   assert.deepEqual(goldFinish(DURATION),goldFinish(DURATION+20));
 });
+test("gold echo rings are staggered, smaller, weaker and settle before CTA", async () => {
+  const { goldEcho } = await import("../components/motion.ts");
+  assert.equal(goldEcho(REVEAL_AT+.5,0).visible,false);
+  assert.equal(goldEcho(REVEAL_AT+.9,0).visible,true);
+  assert.equal(goldEcho(REVEAL_AT+.9,1).visible,false);
+  assert.equal(goldEcho(REVEAL_AT+1.35,1).visible,true);
+  for(let t=0;t<=DURATION;t+=.02) for(const index of [0,1]) {
+    const echo=goldEcho(t,index);
+    assert.ok(echo.radius<=2.8 && echo.radius>=.3);
+    assert.ok(echo.opacity>=0 && echo.opacity<= (index===0 ? .32 : .18));
+    assert.equal(goldEcho(t,index,true).visible,false);
+    assert.equal(goldEcho(t,index,true).opacity,0);
+  }
+  assert.equal(goldEcho(DURATION,0).visible,false);
+  assert.equal(goldEcho(DURATION,1).visible,false);
+});

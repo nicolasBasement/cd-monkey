@@ -80,3 +80,5 @@ La cripta ahora usa un shader volumétrico de ray marching (32 muestras por rayo
 
 ### E · Oro maldito
 Conserva exactamente la coreografía de Tesoro. Solo el cuerpo del CD recibe el shader de oro envejecido: reflejo de borde durante la salida, un único barrido dorado con tinte verde transitorio, y reflejo dependiente de la vista al girar. Mantiene el arte original y el hub transparente. No agrega loops de glitter ni pasadas de render; reduced motion omite los acentos temporales.
+
+Oro maldito: dos ecos del aro principal, a +0.70/+1.15 s, con radios máximos 2.8/2.0 y opacidad 0.32/0.18. El barrido foil se retrasa y ensancha para distinguirlo del destello inicial; termina antes del CTA.
