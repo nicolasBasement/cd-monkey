@@ -200,7 +200,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
     perspective.updateProjectionMatrix();
     if (glow.current) glow.current.intensity = 0.05 + m.charge * (variant === "crypt" ? 3 : 8) + m.flash * 12;
     if (run && t >= DURATION && !finished.current) { finished.current = true; gl.domElement.style.cursor = "default"; onComplete(); }
-  });
+  }, -2);
   function isDisc(e: ThreeEvent<PointerEvent>) {
     return model.discs.includes(e.object);
   }

@@ -75,3 +75,5 @@ Maldito: el CD sale plano de la bandeja antes de girar (2.45–2.8 s). Se desact
 Apertura lenta y extracción recta bajo un haz diagonal dorado, con iluminación más oscura. Niebla baja y polvo procedural en shaders sin imágenes ni rectángulos visibles. La niebla se disipa antes del CTA; en movimiento reducido se desactiva y el haz queda estático. Sin explosión, aro ni calaveras. El disco despeja la bandeja antes de inclinarse.
 
 Pulido de La cripta: tres capas de niebla con ruido y bordes elípticos independientes; haz gaussiano suave, menos brillante, que se estrecha detrás del CD. El foco real sigue la extracción y la niebla se disipa entre 3.7 y 5.9 s. Las fases de luz, seguimiento y limpieza se verifican con tests.
+
+La cripta ahora usa un shader volumétrico de ray marching (32 muestras por rayo) en espacio 3D: dispersión con densidad de ruido 3D y niebla baja, sin planos orientados a cámara. Un prepass de profundidad de resolución acotada limita la integración contra la caja y el CD. El volumen se oculta durante ese prepass para evitar feedback. No simula sombras volumétricas de cada objeto.
