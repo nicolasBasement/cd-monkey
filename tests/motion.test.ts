@@ -135,9 +135,24 @@ test("cursed reveal builds pressure, opens before extraction and settles", () =>
   assert.equal(choreography(1.5, "cursed").lid, 0);
   assert.equal(choreography(2.25, "cursed").disc, 0);
   assert.ok(choreography(2.25, "cursed").lid > .9);
-  assert.ok(choreography(2.6, "cursed").cameraFacing > .99);
+  assert.ok(choreography(2.8, "cursed").cameraFacing > .99);
   assert.equal(choreography(2.95, "cursed").flash, 1);
   const end=choreography(DURATION, "cursed");
   assert.equal(end.disc, 1); assert.ok(Math.abs(end.lid)<1e-10); assert.equal(end.turn,0);
   for(let t=0; t<=DURATION; t+=.02) for(const value of Object.values(choreography(t,"cursed"))) assert.ok(Number.isFinite(value));
+});
+
+test("cursed disc clears the tray before either rotation channel activates", () => {
+  for(let t=0; t<=2.45; t+=.005) {
+    const m=choreography(t,"cursed");
+    assert.equal(m.tilt,0);
+    assert.equal(m.cameraFacing,0);
+  }
+  assert.ok(choreography(2.45,"cursed").disc > .63);
+  assert.equal(choreography(2.8,"cursed").cameraFacing,1);
+  for(const t of [2.25,2.45,2.8]) {
+    const before=choreography(t-1e-6,"cursed"), after=choreography(t+1e-6,"cursed");
+    assert.ok(Math.abs(before.cameraFacing-after.cameraFacing)<.0001);
+    assert.ok(Math.abs(before.disc-after.disc)<.0001);
+  }
 });

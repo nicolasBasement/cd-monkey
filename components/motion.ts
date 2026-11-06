@@ -31,8 +31,9 @@ export function choreography(time: number, variant: RevealVariant = "treasure") 
     presentation: smooth((t - 4.4) / 1.7),
     tension: smooth((t - 2.65) / 0.3) * (1 - smooth((t - 3.2) / 0.45)),
     disc: cursed ? easeOut((t - 2.25) / .7) : haunted ? .6 * smooth((t - 1.95) / .85) + .4 * smooth((t - 3.1) / .7) : spring((t - 1.95) / 2.1),
-    tilt: smooth((t - 2) / 1.3),
-    cameraFacing: cursed ? smooth((t - 2.15) / .3) : smooth((t - 2.05) / 0.75),
+    // Maldito first lifts flat out of the tray; camera-facing rotation owns its tilt.
+    tilt: cursed ? 0 : smooth((t - 2) / 1.3),
+    cameraFacing: cursed ? smooth((t - 2.45) / .35) : smooth((t - 2.05) / 0.75),
     // Slow edge-on anticipation, then a fast turn into the reveal.
     turn: haunted || cursed ? 0 : smooth((t - 2.1) / 0.75) * Math.PI * 0.5 + easeOut((t - 3.2) / 0.45) * Math.PI * 1.5,
     camera: smooth((t - 1.0) / 3.7),
