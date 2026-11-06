@@ -3,7 +3,7 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Environment, Lightformer, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { choreography, goldFinish, DURATION, framing, fittedZoom, smooth, type RevealVariant } from "./motion";
+import { choreography, goldFinish, goldPose, DURATION, framing, fittedZoom, smooth, type RevealVariant } from "./motion";
 import { applyGoldFinish } from "./gold-material";
 import RevealEffects from "./RevealEffects";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
@@ -123,6 +123,8 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
   const axis = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const spin = useMemo(() => new THREE.Quaternion(), []);
   const face = useMemo(() => new THREE.Quaternion(), []);
+  const goldRotation = useMemo(() => new THREE.Quaternion(), []);
+  const goldEuler = useMemo(() => new THREE.Euler(), []);
   const cameraFacing = useMemo(() => new THREE.Quaternion(), []);
   const parentRotation = useMemo(() => new THREE.Quaternion(), []);
 
@@ -181,9 +183,13 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
     camera.updateMatrixWorld();
     // Resolve the final pose in camera space, cancelling the case/GLB parents.
     // Blend before completion so there is no snap when interaction becomes active.
+    const pose = goldPose(t, reduced);
+    goldEuler.set(pose.pitch, pose.yaw, 0, "YXZ");
+    goldRotation.setFromEuler(goldEuler);
     model.discs.forEach(disc => {
       disc.parent!.getWorldQuaternion(parentRotation);
       cameraFacing.copy(parentRotation).invert().multiply(camera.quaternion);
+      if (variant === "gold") cameraFacing.multiply(goldRotation);
       if (t >= DURATION) cameraFacing.multiply(manualRotation);
       disc.quaternion.slerp(cameraFacing, m.cameraFacing);
     });

@@ -219,3 +219,14 @@ test("gold echo rings are staggered, smaller, weaker and settle before CTA", asy
   assert.equal(goldEcho(DURATION,0).visible,false);
   assert.equal(goldEcho(DURATION,1).visible,false);
 });
+test("gold material tilt is subtle and returns to exact rest before interaction", async () => {
+  const { goldPose } = await import("../components/motion.ts");
+  for(const t of [0,4.6,6.25,DURATION,DURATION+10]) assert.deepEqual(goldPose(t),{yaw:0,pitch:0});
+  assert.ok(goldPose(5.425).yaw>.17);
+  for(let t=0;t<DURATION;t+=.02) {
+    const pose=goldPose(t);
+    assert.ok(pose.yaw>=0 && pose.yaw<=.18);
+    assert.ok(pose.pitch>=-.07 && pose.pitch<=0);
+    assert.deepEqual(goldPose(t,true),{yaw:0,pitch:0});
+  }
+});

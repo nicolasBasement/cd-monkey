@@ -3,11 +3,15 @@ import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import * as THREE from "three";
+import { softenGoldRing } from "./gold-rings";
 import CryptAtmosphere from "./CryptAtmosphere";
 import MurrayParticles from "./MurrayParticles";
 import { choreography, goldEcho, revealAt, DURATION, smooth, type RevealVariant } from "./motion";
 
 export default function RevealEffects({ variant, time, reduced, anchor, caseRig }: { caseRig: RefObject<THREE.Group | null>; variant: RevealVariant; time: { current: number }; reduced: boolean; anchor: THREE.Vector3 }) {
+  const gold = variant === "gold";
+  const ringViewport = useMemo(() => ({ value: 1 }), []);
+  const bufferSize = useMemo(() => new THREE.Vector2(), []);
   const haunted = variant !== "treasure" && variant !== "gold";
   const crypt = variant === "crypt";
   const cursed = variant === "cursed";
@@ -43,7 +47,8 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
     const angle = i * 2.39996;
     return [Math.cos(angle), Math.sin(i * 13.7) * 0.6 + 0.35, Math.sin(angle), 0.6 + (i % 13) / 13];
   }), []);
-  useFrame(({ camera }) => {
+  useFrame(({ camera, gl }) => {
+    ringViewport.value = gl.getDrawingBufferSize(bufferSize).y;
     const t = time.current;
     const m = choreography(t, variant);
     const age = t - revealAt(variant);
@@ -73,7 +78,7 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
         ring.current.position.copy(anchor).addScaledVector(direction, .3);
         ring.current.quaternion.copy(camera.quaternion);
       }
-      ring.current.scale.setScalar(0.25 + m.shockwave * 4.8);
+      ring.current.scale.setScalar(0.25 + m.shockwave * (gold ? 2.8 : 4.8));
       (ring.current.material as THREE.MeshBasicMaterial).opacity = (1 - m.shockwave) * 0.85;
     }
     if (echoes.current) {
@@ -137,13 +142,13 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
           }`} />
     </mesh>
     <mesh ref={ring} rotation-x={-Math.PI / 2} position={[0, -1.01, 0]} visible={false}>
-      <ringGeometry args={[0.972, 1, 128]} />
-      <meshBasicMaterial color={haunted ? [2, 5, 4] : [5, 3, 1]} transparent toneMapped={false} depthWrite={false} side={THREE.DoubleSide} />
+      <ringGeometry args={[gold ? .94 : .972, 1, 128]} />
+      <meshBasicMaterial onUpdate={material => { if(gold) softenGoldRing(material, ringViewport); }} color={haunted ? [2, 5, 4] : [5, 3, 1]} transparent toneMapped={false} depthWrite={false} side={THREE.DoubleSide} />
     </mesh>
     {variant === "gold" && <group ref={echoes}>
       {[0, 1].map(index => <mesh key={index} rotation-x={-Math.PI / 2} position={[0, -1.01, 0]} visible={false}>
-        <ringGeometry args={[.975, 1, 128]} />
-        <meshBasicMaterial color={[2.2, 1.3, .4]} transparent opacity={0} toneMapped={false} depthWrite={false} side={THREE.DoubleSide} />
+        <ringGeometry args={[.94, 1, 128]} />
+        <meshBasicMaterial onUpdate={material => softenGoldRing(material, ringViewport)} color={[2.2, 1.3, .4]} transparent opacity={0} toneMapped={false} depthWrite={false} side={THREE.DoubleSide} />
       </mesh>)}
     </group>}
     <pointLight ref={light} distance={5} color={haunted ? "#a9ffe2" : "#ffe5ab"} intensity={0} />

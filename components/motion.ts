@@ -98,7 +98,14 @@ export function goldEcho(time: number, index: number, reduced = false) {
   const progress = clamp(age / 1.1);
   return {
     visible: !reduced && age > 0 && age < 1.1,
-    radius: .3 + easeOut(progress) * (index === 0 ? 2.5 : 1.7),
+    radius: .3 + easeOut(progress) * (index === 0 ? 1.9 : 1.3),
     opacity: reduced ? 0 : smooth(progress / .15) * (1 - smooth(progress)) * (index === 0 ? .32 : .18),
   };
+}
+
+// A short material inspection gesture, after the reveal and before interaction.
+export function goldPose(time: number, reduced = false) {
+  const progress = clamp((time - 4.6) / 1.65);
+  const envelope = reduced || progress === 0 || progress === 1 ? 0 : Math.sin(progress * Math.PI) ** 3;
+  return { yaw: envelope * .18, pitch: envelope ? envelope * -.07 : 0 };
 }
