@@ -75,6 +75,11 @@ function Artifact({ quality, variant, rotationKey, run, reduced, onReady, onComp
       }
       const original = mesh.material as THREE.MeshPhysicalMaterial;
       const material = original.clone();
+      // Preserve artwork detail when the disc is viewed at an oblique angle.
+      if (material.map) {
+        material.map.anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy());
+        material.map.needsUpdate = true;
+      }
       if (material.name === "glass") {
         material.envMapIntensity = 0.3;
         material.roughness = 0.015;
@@ -82,7 +87,7 @@ function Artifact({ quality, variant, rotationKey, run, reduced, onReady, onComp
       if (material.name === "DefaultMaterial.001") {
         material.transmission = 0;
         material.metalness = 0.45;
-        material.roughness = 0.22;
+        material.roughness = 0;
         material.iridescence = 1;
         material.iridescenceIOR = 1.35;
         material.iridescenceThicknessRange = [150, 420];
@@ -108,7 +113,7 @@ function Artifact({ quality, variant, rotationKey, run, reduced, onReady, onComp
       rotations: discs.map(d => d.quaternion.clone()),
       scales: discs.map(d => d.scale.clone()),
     };
-  }, [scene, foil, gold, variant]);
+  }, [scene, foil, gold, variant, gl]);
   useEffect(() => { onReady(); }, [onReady]);
   useEffect(() => {
     time.current = 0; finished.current = false; hoverX.current = null;
@@ -255,7 +260,7 @@ function Artifact({ quality, variant, rotationKey, run, reduced, onReady, onComp
   </>;
 }
 export default function Scene(props: Props) {
-  return <Canvas dpr={[1, 1.5]} camera={{ position: props.variant === "murray" ? [-2.3, 5.6, 6.3] : [2.3, 5.6, 6.3], fov: 37 }} gl={{ antialias: true, alpha: true }} shadows>
+  return <Canvas dpr={[1, 2]} camera={{ position: props.variant === "murray" ? [-2.3, 5.6, 6.3] : [2.3, 5.6, 6.3], fov: 37 }} gl={{ antialias: true, alpha: true }} shadows>
     <ambientLight intensity={props.variant === "crypt" ? 0.35 : 0.75} />
     <directionalLight position={[3, 7, 5]} intensity={props.variant === "crypt" ? 1.1 : 3} color="#e4e9ff" />
     <directionalLight position={[-4, 2, -2]} intensity={props.variant === "crypt" ? 1.8 : 5} color={props.variant === "cursed" ? "#9bdb5c" : props.variant === "murray" ? "#75dace" : "#657bff"} />
@@ -266,7 +271,7 @@ export default function Scene(props: Props) {
         <Lightformer position={[3, 3, 4]} scale={[3, 5, 1]} intensity={4} color="#ffdc9f" rotation-y={-Math.PI / 3} />
       </Environment>
       <Artifact {...props} />
-      {!props.reduced && <EffectComposer multisampling={0}><Bloom intensity={0.8} luminanceThreshold={1.15} luminanceSmoothing={0.3} mipmapBlur /></EffectComposer>}
+      {!props.reduced && <EffectComposer multisampling={4}><Bloom intensity={0.8} luminanceThreshold={1.15} luminanceSmoothing={0.3} mipmapBlur /></EffectComposer>}
 
     </Suspense>
   </Canvas>;
