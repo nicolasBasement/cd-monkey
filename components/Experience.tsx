@@ -2,6 +2,7 @@
 import dynamic from "next/dynamic";
 import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { RevealVariant } from "./motion";
+import { DEFAULT_MODEL_QUALITY, type ModelQuality } from "./model-quality";
 import { playReveal } from "./audio";
 const Scene = dynamic(() => import("./Scene"), { ssr: false });
 class SceneBoundary extends Component<{ children: ReactNode; onError: () => void }, { error: boolean }> {
@@ -11,6 +12,7 @@ class SceneBoundary extends Component<{ children: ReactNode; onError: () => void
   render() { return this.state.error ? null : this.props.children; }
 }
 export default function Experience() {
+  const [quality, setQuality] = useState<ModelQuality>(DEFAULT_MODEL_QUALITY);
   const [run, setRun] = useState(0);
   const [variant, setVariant] = useState<RevealVariant>("treasure");
   const [rotationKey, setRotationKey] = useState(0);
@@ -50,6 +52,13 @@ export default function Experience() {
     busy.current = false;
     setRun(0); setRotationKey(0); setPhase("loading"); setVariant(next);
   }
+  function selectQuality(next: ModelQuality) {
+    if (next === quality) return;
+    void context.current?.close();
+    context.current = null;
+    busy.current = false;
+    setRun(0); setRotationKey(0); setPhase("loading"); setQuality(next);
+  }
   function toggleSound() {
     setSound(value => {
       if (value) void context.current?.suspend();
@@ -62,25 +71,32 @@ export default function Experience() {
   return <main className={`experience ${phase} variant-${variant}`}>
     <div className="ambient" aria-hidden="true" />
     <header>
-      <div className="variant-switch" role="group" aria-label="Elegir animación">
-        <button aria-pressed={variant === "treasure"} onClick={() => selectVariant("treasure")}><span>A</span> Tesoro</button>
+      <div className="variant-switch" role="group" aria-label="Choose an animation">
+        <button aria-pressed={variant === "treasure"} onClick={() => selectVariant("treasure")}><span>A</span> Treasure</button>
         <button aria-pressed={variant === "murray"} onClick={() => selectVariant("murray")}><span>B</span> Murray</button>
-        <button aria-pressed={variant === "cursed"} onClick={() => selectVariant("cursed")}><span>C</span> Maldito</button>
-        <button aria-pressed={variant === "crypt"} onClick={() => selectVariant("crypt")}><span>D</span> La cripta</button>
-        <button aria-pressed={variant === "gold"} onClick={() => selectVariant("gold")}><span>E</span> Oro maldito</button>
+        <button aria-pressed={variant === "cursed"} onClick={() => selectVariant("cursed")}><span>C</span> Cursed</button>
+        <button aria-pressed={variant === "crypt"} onClick={() => selectVariant("crypt")}><span>D</span> The Crypt</button>
+        <button aria-pressed={variant === "gold"} onClick={() => selectVariant("gold")}><span>E</span> Cursed Gold</button>
       </div>
-      <button className="sound-button" onClick={toggleSound} aria-pressed={sound} aria-label={sound ? "Desactivar sonido" : "Activar sonido"}>
+      <label className="quality-control">
+        <span>Detail</span>
+        <select aria-label="Model quality" value={quality} onChange={e => selectQuality(e.target.value as ModelQuality)}>
+          <option value="2k">2K · Standard</option>
+          <option value="4k">4K · High</option>
+        </select>
+      </label>
+      <button className="sound-button" onClick={toggleSound} aria-pressed={sound} aria-label={sound ? "Mute sound" : "Enable sound"}>
         <span className={`wave ${sound ? "active" : ""}`} aria-hidden="true">{[0,1,2,3,4].map(i => <i key={i} />)}</span>
-        Sonido {sound ? "on" : "off"}
+        Sound {sound ? "on" : "off"}
       </button>
     </header>
     <section className="intro">
-      <div className="collection"><span /> Del archivo, a tus manos</div>
-      <h1>{variant === "gold" ? "No es oro todo lo que reluce." : variant === "crypt" ? "Hay leyendas que esperan en la oscuridad." : variant === "cursed" ? "No todos los tesoros duermen." : variant === "treasure" ? "Un clásico. Un tesoro." : "Hay tesoros que no descansan."}</h1>
-      <p>{variant === "gold" ? "Un tesoro con un toque de maldición." : variant === "crypt" ? "Seguí la luz. Encontrá tu tesoro." : variant === "cursed" ? "Rompé el sello. Liberá la aventura." : variant === "treasure" ? "Abrí la caja. Volvé a descubrirlo." : "Murray tiene algo que decir al respecto."}</p>
+      <div className="collection"><span /> From the archives, into your hands</div>
+      <h1>{variant === "gold" ? "Not all that glitters is gold." : variant === "crypt" ? "Some legends wait in the dark." : variant === "cursed" ? "Not every treasure lies dormant." : variant === "treasure" ? "A classic. A treasure." : "Some treasures never rest."}</h1>
+      <p>{variant === "gold" ? "A treasure with a touch of a curse." : variant === "crypt" ? "Follow the light. Find your treasure." : variant === "cursed" ? "Break the seal. Unleash the adventure." : variant === "treasure" ? "Open the case. Rediscover the adventure." : "Murray has something to say about that."}</p>
     </section>
     <section className="stage" data-phase={phase} tabIndex={phase === "ready" || opened ? 0 : -1}
-      aria-label={opened ? "Disco 3D. Mové el mouse a izquierda o derecha para girarlo; en touch, arrastrá. También podés usar las flechas." : "Caja de Monkey Island en 3D. Hacé clic en la caja o presioná Enter para abrirla."}
+      aria-label={opened ? "3D disc. Move your mouse left or right to rotate it, drag on a touchscreen, or use the arrow keys." : "3D Monkey Island case. Click the case or press Enter to open it."}
       onKeyDown={e => {
         if ((phase === "ready" || opened) && (e.key === "Enter" || e.key === " ")) {
           e.preventDefault(); open();
@@ -89,26 +105,26 @@ export default function Experience() {
           e.preventDefault(); setRotationKey(n => n + (e.key === "ArrowLeft" ? -0.4 : 0.4));
         }
       }}>
-      <SceneBoundary onError={onError}><Scene key={variant} variant={variant} rotationKey={rotationKey} run={run} reduced={reduced} onReady={onReady} onComplete={onComplete} onOpen={open} /></SceneBoundary>
+      <SceneBoundary key={variant + quality} onError={onError}><Scene quality={quality} variant={variant} rotationKey={rotationKey} run={run} reduced={reduced} onReady={onReady} onComplete={onComplete} onOpen={open} /></SceneBoundary>
     </section>
     <aside className="artifact-label"><span className="label-line" /><div><strong>The Curse of<br />Monkey Island</strong><span>PC · CD-ROM · 1997</span></div></aside>
     <section className={phase === "loading" || phase === "error" ? "interaction" : "sr-only"}>
       <div className="status" role="status" aria-live="polite">
-        {phase === "loading" ? "Preparando tu tesoro…" : phase === "error" ? "No pudimos cargar la escena 3D. Recargá la página con WebGL activado." : phase === "opening" ? "Hay cosas que nunca pierden su magia." : opened ? (variant === "treasure" ? "Bienvenido de vuelta, pirata." : "El tesoro es tuyo. La maldición también.") : "Hacé clic en la caja para abrirla."}
+        {phase === "loading" ? "Preparing your treasure…" : phase === "error" ? "The 3D scene could not load. Reload the page with WebGL enabled." : phase === "opening" ? "Some things never lose their magic." : opened ? (variant === "treasure" ? "Welcome back, pirate." : "The treasure is yours. So is the curse.") : "Click the case to open it."}
       </div>
-      {phase === "error" && <button className="open-button" onClick={() => location.reload()}>Volver a intentar</button>}
+      {phase === "error" && <button className="open-button" onClick={() => location.reload()}>Try again</button>}
     </section>
-    {opened && <section className="download-cta" aria-label="Versión HD">
-      <span className="download-eyebrow">El clásico, remasterizado en HD</span>
+    {opened && <section className="download-cta" aria-label="HD edition">
+      <span className="download-eyebrow">The classic, remastered in HD</span>
       {downloadUrl
-        ? <a className="open-button" href={downloadUrl}>Descargar versión HD</a>
-        : <button className="open-button" disabled aria-describedby="download-pending">Descargar versión HD</button>}
-      {!downloadUrl && <small id="download-pending">Descarga próximamente</small>}
+        ? <a className="open-button" href={downloadUrl}>Download HD edition</a>
+        : <button className="open-button" disabled aria-describedby="download-pending">Download HD edition</button>}
+      {!downloadUrl && <small id="download-pending">Download coming soon</small>}
     </section>}
-    <footer><span>Un pequeño ritual. Un gran clásico.</span><button onClick={() => setInfo(true)}>Acerca de esta pieza <span>＋</span></button><span className="edition">Archivo interactivo / 001</span></footer>
+    <footer><span>A small ritual. A timeless classic.</span><button onClick={() => setInfo(true)}>About this piece <span>＋</span></button><span className="edition">Interactive archive / 001</span></footer>
     <dialog ref={dialog} className="info-modal" aria-labelledby="info-title" onClose={() => setInfo(false)} onClick={e => { if(e.target === e.currentTarget) { const r = e.currentTarget.getBoundingClientRect(); if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) setInfo(false); } }}>
-      <button autoFocus className="close" onClick={() => setInfo(false)} aria-label="Cerrar">×</button>
-      <span>La pieza</span><h2 id="info-title">Una caja.<br />Mil recuerdos.</h2><p>Un homenaje interactivo a The Curse of Monkey Island, el clásico de aventuras de LucasArts de 1997.</p><p>Modelo 3D proporcionado por el autor del proyecto. Animación procedural, iluminación de estudio y sonido sintetizado para este pequeño ritual digital.</p><small>Experimento no oficial. Las marcas y el arte pertenecen a sus respectivos titulares.</small>
+      <button autoFocus className="close" onClick={() => setInfo(false)} aria-label="Close">×</button>
+      <span>The piece</span><h2 id="info-title">One case.<br />A thousand memories.</h2><p>An interactive tribute to The Curse of Monkey Island, the classic 1997 adventure from LucasArts.</p><p>3D model supplied by the project creator. Procedural animation, studio lighting, and synthesized sound bring this little digital ritual to life.</p><small>An unofficial experiment. Trademarks and artwork belong to their respective owners.</small>
     </dialog>
   </main>;
 }

@@ -230,3 +230,20 @@ test("gold material tilt is subtle and returns to exact rest before interaction"
     assert.deepEqual(goldPose(t,true),{yaw:0,pitch:0});
   }
 });
+test("optimized quality assets retain the animation and material contract", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { MODEL_PATHS, DEFAULT_MODEL_QUALITY } = await import("../components/model-quality.ts");
+  assert.equal(DEFAULT_MODEL_QUALITY,"2k");
+  const models = Object.values(MODEL_PATHS).map(path => {
+    const bytes=readFileSync(new URL("../public"+path,import.meta.url));
+    assert.equal(bytes.readUInt32LE(0),0x46546c67);
+    assert.equal(bytes.readUInt32LE(4),2);
+    assert.equal(bytes.readUInt32LE(8),bytes.length);
+    return JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)).toString());
+  });
+  for(const gltf of models) {
+    for(const name of ["Back","Top","CD_low.001","CD_low.002"]) assert.ok(gltf.nodes.some((n:{name:string})=>n.name===name),name);
+    for(const name of ["glass","DefaultMaterial.001"]) assert.ok(gltf.materials.some((m:{name:string})=>m.name===name),name);
+  }
+  assert.deepEqual(models[0].nodes,models[1].nodes);
+});

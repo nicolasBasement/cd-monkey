@@ -5,14 +5,15 @@ import { Environment, Lightformer, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { choreography, goldFinish, goldPose, DURATION, framing, fittedZoom, smooth, type RevealVariant } from "./motion";
 import { applyGoldFinish } from "./gold-material";
+import { MODEL_PATHS, type ModelQuality } from "./model-quality";
 import RevealEffects from "./RevealEffects";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 
 const modelBody = (mesh: THREE.Mesh) => mesh.name === "CD_low001" || mesh.name === "CD_low.001";
 
-type Props = { variant: RevealVariant; rotationKey: number; run: number; reduced: boolean; onReady: () => void; onComplete: () => void; onOpen: () => void };
-function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onOpen }: Props) {
-  const { scene } = useGLTF("/models/cd.glb");
+type Props = { quality: ModelQuality; variant: RevealVariant; rotationKey: number; run: number; reduced: boolean; onReady: () => void; onComplete: () => void; onOpen: () => void };
+function Artifact({ quality, variant, rotationKey, run, reduced, onReady, onComplete, onOpen }: Props) {
+  const { scene } = useGLTF(MODEL_PATHS[quality]);
   const rig = useRef<THREE.Group>(null);
   const glow = useRef<THREE.PointLight>(null);
   const discAnchor = useMemo(() => new THREE.Vector3(), []);

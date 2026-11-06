@@ -1,51 +1,68 @@
-# Monkey Island — dos revelaciones
+# Monkey Island — CD reveal
 
-Experiencia de apertura hecha con Next.js, React Three Fiber y Three.js. Usa el modelo de Monkey Island y una animación procedural inspirada en la referencia de loot reveal: carga, anticipación, apertura, pausa de canto, impacto, cierre de caja con rebote y doble brillo final.
+An interactive jewel-case reveal built with Next.js, React Three Fiber, and Three.js. Five animation variants share the supplied Monkey Island model, with procedural motion rather than playback of its embedded animation.
 
-## Ejecutar
+## Run locally
 
-Requiere Node.js 22.18+.
+Requires Node.js 22.18 or newer.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Abrir http://localhost:3000. Para producción estática: `npm run build` y `npm start`. El resultado distribuible queda en `out/`.
+Open http://localhost:3000. For a static production build, run `npm run build` followed by `npm start`; exported files are in `out/`.
 
-Si la instalación de Sharp intenta compilar contra una instalación global de libvips, usar `SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm ci`.
+If Sharp tries to build against a globally installed libvips, use `SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm ci`.
 
-## Comparar las opciones
+## Controls and variants
 
-El selector superior permite elegir **A · Tesoro** (apertura dorada) o **B · Murray** (levitación, cámara desde el lado opuesto, trayectoria espiral y apariciones fantasmales). Cambiar de opción cancela la secuencia y el audio anteriores.
+Click the closed case to open it, or focus the viewer with Tab and press Enter/Space. Once revealed, move the mouse horizontally to rotate the disc, drag on touchscreens, or use the left/right arrow keys. Click the case again to replay.
 
-No hay botón de apertura: hacer clic en la caja cerrada, o enfocar el visor con Tab y presionar Enter/Espacio. Al terminar, el CD queda ampliado y centrado en X; el movimiento horizontal del mouse lo gira sin pulsar, y en touch se puede arrastrar; otro clic en la caja repite la animación. El aro central tiene un material translúcido separado, no el material opaco del disco.
-
-## Ajustar la animación
-
-| Archivo | Responsabilidad |
+| Variant | Treatment |
 | --- | --- |
-| `components/motion.ts` | Timeline de 6,8 s, easing, rebotes y momento del impacto. |
-| `components/Scene.tsx` | Poses del modelo, cámara, materiales, foil y luces. No reproduce el clip del GLB. |
-| `components/RevealEffects.tsx` | Contorno de carga, rayos, partículas y anillo expansivo. |
-| `components/MurrayParticles.tsx` | Cuatro apariciones con chroma key por shader, solo en B; no edita la imagen fuente. |
-| `components/murray-motion.ts` | Trayectorias, entradas escalonadas y fade de Murray. |
-| `components/audio.ts` | Rumble, clic, whoosh y golpe sintetizados; comparte el tiempo de impacto. |
-| `components/Experience.tsx` | Estados, replay, sonido, diálogo y accesibilidad. |
+| A · Treasure | Original gold reveal, anticipation, flash, expanding ring, and case closure. |
+| B · Murray | Straight levitation with a short pause and four laughing-skull appearances; no lateral orbit or full spin. |
+| C · Cursed | Green charge and a short extraction. The disc lifts flat before turning toward the camera to clear the tray. |
+| D · The Crypt | Slow opening, a diagonal light shaft, and low world-space volumetric fog. No explosive flash or skulls. |
+| E · Cursed Gold | Treasure-based motion with a brief 10° material-inspection tilt, view-dependent gold foil, and two smaller, softer ring echoes. |
 
-Al terminar, el movimiento horizontal del mouse gira el CD sin girar la caja; en touch se conserva el arrastre; con el visor enfocado, las flechas izquierda/derecha también lo rotan. El canvas es de viewport completo, sin plano de fondo, y un control de bounds proyectados mantiene todas las piezas dentro del encuadre durante la apertura y la inspección.
+Switching variant or model quality resets the scene and cancels scheduled audio. The disc finishes centered horizontally, separated from the case, with the download CTA below. Reduced motion skips to the final pose without reveal particles, camera shake, bloom, or reveal audio; The Crypt uses a static low-intensity shaft without fog.
 
-El modo de movimiento reducido salta a la pose final sin sacudidas, partículas, bloom ni audio de revelación.
+## Model quality
 
-## Sustituir el modelo
+The optimized GLBs supplied by the project creator are used without recompression:
 
-Reemplazar `public/models/cd.glb` por el export optimizado. Conservar las piezas separadas, los transforms y la bisagra: `Top`, `Back`, `CD_low.001` y `CD_low.002`. Three.js normaliza los nombres de los discos a `CD_low001` y `CD_low002`.
+- `public/models/cd-2k.glb`: 1.55 MB; the default **2K · Standard** setting.
+- `public/models/cd-4k.glb`: 3.31 MB; requested only when **4K · High** is selected.
 
-La copia actual tiene texturas WebP reducidas provisionalmente. El GLB original en Downloads no se modificó. La optimización definitiva queda pendiente del nuevo modelo; si cambian los pivotes, habrá que ajustar las poses en Scene.
+The **Detail** selector changes model texture quality, not canvas resolution. Browser/loader caching can retain a previously selected model. Source files in Downloads are not modified.
 
-La utilidad opcional `npm run optimize-model -- /ruta/al/modelo.glb` escribe únicamente la copia de `public/models/cd.glb`.
+For replacement exports, preserve the separate parts, transforms, and hinge: `Top`, `Back`, `CD_low.001`, and `CD_low.002`. Three.js sanitizes the disc names to `CD_low001` and `CD_low002`. Both supplied exports retain the main transforms; the negligible cover-back translation in the provisional model is absent. New pivots require adjusting the poses in `Scene.tsx`.
 
-## Verificar
+The optional utility `npm run optimize-model -- /path/to/model.glb [output.glb]` writes `public/models/cd-2k.glb` by default. Do not run it on the already optimized assets unless you intend to replace them.
+
+## HD download
+
+Set `NEXT_PUBLIC_GAME_DOWNLOAD_URL` to the actual download URL before building. Without it, the CTA is disabled and displays **Download coming soon**. No game download is bundled with this project.
+
+## Implementation map
+
+| File | Responsibility |
+| --- | --- |
+| `components/Experience.tsx` | English UI, phase state, quality selection, replay, audio controls, modal, accessibility, and CTA. |
+| `components/model-quality.ts` | Quality names, asset URLs, and the 2K default. |
+| `components/motion.ts` | The 6.8-second choreography, easing, event timing, gold tilt, and atmospheric envelopes. |
+| `components/Scene.tsx` | Model poses, camera framing, interaction, material assignment, and lights. |
+| `components/RevealEffects.tsx` | Charge outline, rays, particles, and ring effects. |
+| `components/gold-material.ts` / `gold-rings.ts` | View-dependent foil and feathered rings for Cursed Gold only. |
+| `components/CryptAtmosphere.tsx` | 32-step world-space volumetric shader with a bounded-resolution scene-depth prepass; not per-object volumetric shadowing. |
+| `components/MurrayParticles.tsx` / `murray-motion.ts` | Chroma-keyed skull sprites, staggered motion, and simulated jaw animation. |
+| `components/audio.ts` | Synthesized charge, latch, whoosh, and impact cues. |
+
+The clear hub has its own translucent material rather than the opaque disc finish. The full-viewport canvas uses a projected-bounds guard; visual inspection remains necessary for clipping and silhouette overlap throughout the animation.
+
+## Validate
 
 ```sh
 npm test
@@ -53,34 +70,10 @@ npm run typecheck
 npm run build
 ```
 
-Los tests verifican reposo, orden de fases, sincronización del impacto, overshoot y estabilidad numérica. La comprobación visual debe incluir apertura, replay, vista móvil, sonido y movimiento reducido.
+Tests cover phase order, finite poses, continuity, reduced-motion envelopes, ring echoes, and the optimized model naming/transform contract. Also inspect normal-speed playback, mobile layout, both qualities, shader console errors, replay, mid-animation switching, sound, and keyboard/touch input. Passing tests does not certify visual polish or device GPU performance.
 
-Las fuentes se sirven localmente; sus licencias están en `public/fonts/`. No se incluyen el video de referencia ni archivos privados. El arte y las marcas del juego pertenecen a sus titulares.
+## Assets and attribution
 
-## Imagen de Murray
+`public/textures/murray-reference.png` is the user-supplied screenshot of the Murray GIF from Monkey Island Wiki. Its mustard background is removed in the shader through chroma key and UV cropping. Jaw movement simulates a laugh from this static image; it does not reproduce the original GIF frames. The source image is unchanged.
 
-`public/textures/murray-reference.png` es la captura aportada por el usuario del GIF de Murray de Monkey Island Wiki. El shader oculta el fondo mostaza y recorta el encuadre por UV; el archivo original se mantiene sin editar. La captura es estática: se animan posición, inclinación y opacidad, y se simula una risa desplazando la mandíbula en UV. No reproduce los fotogramas del GIF original. Las cuatro apariciones terminan antes de habilitar la inspección y se omiten con movimiento reducido.
-
-### Descarga HD
-El cierre de ambas variantes alinea el plano del CD con la cámara y muestra el CTA de descarga. Configurá `NEXT_PUBLIC_GAME_DOWNLOAD_URL` con el enlace real antes de compilar; sin enlace se muestra deshabilitado y con “Descarga próximamente”. El giro con mouse/touch continúa disponible sin cursor de doble flecha.
-
-La presentación orienta el disco hacia la cámara durante la extracción (2.05–2.8 s), antes del destello. La caja se retira a un costado para separar siluetas. El contorno de carga copia la matriz mundial del rig, incluida la levitación de Murray. Tipografías locales Pirata One e IM Fell English (licencias OFL en public/fonts); CTA de madera construido con CSS.
-
-### C · Maldito
-Tercera opción: presión sin temblor, luz verde, apertura a 1.65 s, extracción frontal corta a 2.25 s y destello/aro a 2.95 s. Sin calaveras ni lluvia de partículas. Murray conserva sus calaveras pero ahora sube en línea recta, pausa brevemente y termina de levitar sin vueltas. Tesoro conserva su coreografía.
-
-Maldito: el CD sale plano de la bandeja antes de girar (2.45–2.8 s). Se desactiva el tilt compartido para evitar que rote dentro de la caja antes de comenzar la extracción.
-
-### D · La cripta
-Apertura lenta y extracción recta bajo un haz diagonal dorado, con iluminación más oscura. Niebla baja y polvo procedural en shaders sin imágenes ni rectángulos visibles. La niebla se disipa antes del CTA; en movimiento reducido se desactiva y el haz queda estático. Sin explosión, aro ni calaveras. El disco despeja la bandeja antes de inclinarse.
-
-Pulido de La cripta: tres capas de niebla con ruido y bordes elípticos independientes; haz gaussiano suave, menos brillante, que se estrecha detrás del CD. El foco real sigue la extracción y la niebla se disipa entre 3.7 y 5.9 s. Las fases de luz, seguimiento y limpieza se verifican con tests.
-
-La cripta ahora usa un shader volumétrico de ray marching (32 muestras por rayo) en espacio 3D: dispersión con densidad de ruido 3D y niebla baja, sin planos orientados a cámara. Un prepass de profundidad de resolución acotada limita la integración contra la caja y el CD. El volumen se oculta durante ese prepass para evitar feedback. No simula sombras volumétricas de cada objeto.
-
-### E · Oro maldito
-Conserva exactamente la coreografía de Tesoro. Solo el cuerpo del CD recibe el shader de oro envejecido: reflejo de borde durante la salida, un único barrido dorado con tinte verde transitorio, y reflejo dependiente de la vista al girar. Mantiene el arte original y el hub transparente. No agrega loops de glitter ni pasadas de render; reduced motion omite los acentos temporales.
-
-Oro maldito: dos ecos del aro principal, a +0.70/+1.15 s, con radios máximos 2.8/2.0 y opacidad 0.32/0.18. El barrido foil se retrasa y ensancha para distinguirlo del destello inicial; termina antes del CTA.
-
-Pulido E: el foil responde al ángulo de vista en la iluminación especular, no a una franja emisiva desplazada por tiempo. Un gesto de ~10° entre 4.6–6.25 s muestra el acabado y retorna exactamente al frente. Los aros tienen bordes difusos, menor radio y caída hacia el área del footer; las otras variantes conservan sus materiales de aro.
+Pirata One and IM Fell English provide the visible typography; fonts are served locally and their licenses are in `public/fonts/`. The wooden CTA is CSS. The reference video and private files are not included. This is an unofficial experiment; the game's artwork and trademarks belong to their respective owners.
