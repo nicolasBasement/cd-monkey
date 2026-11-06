@@ -293,3 +293,13 @@ footer, footer button { font-size: 13px; }
   .quality-control select { padding: 5px; }
   .intro { top: 155px; }
 }
+
+/* Lightweight HTML/SVG placeholder: available before the WebGL bundle loads. */
+.model-loader { position: fixed; z-index: 2; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--gold); pointer-events: none; }
+.model-loader-disc { width: clamp(112px, 19vh, 160px); height: auto; overflow: visible; }
+.model-loader-compass { transform-origin: 80px 80px; animation: treasure-loading-turn 5s linear infinite; }
+.model-loader-caption { font-size: 16px; color: #dacba6; }
+.loading .artifact-label, .forming .artifact-label { visibility: hidden; }
+@keyframes treasure-loading-turn { to { transform: rotate(360deg); } }
+@media (max-width: 600px) { .model-loader { padding-top: 80px; } }
+@media (prefers-reduced-motion: reduce) { .model-loader-compass { animation: none; } }

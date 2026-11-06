@@ -7,17 +7,22 @@ import { choreography, goldFinish, goldPose, DURATION, framing, fittedZoom, smoo
 import { applyGoldFinish } from "./gold-material";
 import { MODEL_PATHS, type ModelQuality } from "./model-quality";
 import RevealEffects from "./RevealEffects";
+import SandArrival from "./SandArrival";
+import { applySandArrival, sandProgress, SAND_DURATION, SAND_TAIL } from "./sand-material";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 
 const modelBody = (mesh: THREE.Mesh) => mesh.name === "CD_low001" || mesh.name === "CD_low.001";
 
-type Props = { quality: ModelQuality; variant: RevealVariant; rotationKey: number; run: number; reduced: boolean; onReady: () => void; onComplete: () => void; onOpen: () => void };
-function Artifact({ quality, variant, rotationKey, run, reduced, onReady, onComplete, onOpen }: Props) {
+type Props = { quality: ModelQuality; variant: RevealVariant; rotationKey: number; run: number; reduced: boolean; onLoaded: () => void; onReady: () => void; onComplete: () => void; onOpen: () => void };
+function Artifact({ quality, variant, rotationKey, run, reduced, onLoaded, onReady, onComplete, onOpen }: Props) {
   const { scene } = useGLTF(MODEL_PATHS[quality]);
   const rig = useRef<THREE.Group>(null);
   const glow = useRef<THREE.PointLight>(null);
   const discAnchor = useMemo(() => new THREE.Vector3(), []);
   const time = useRef(0);
+  const arrivalTime = useRef(-1);
+  const arrivalDone = useRef(false);
+  const arrival = useMemo(() => ({ value: 0 }), []);
   const foil = useMemo(() => ({ value: -4 }), []);
   const gold = useMemo(() => ({ sweep: { value: -1.6 }, reveal: { value: 0 }, rim: { value: 0 } }), []);
   const finished = useRef(false);
@@ -104,8 +109,16 @@ function Artifact({ quality, variant, rotationKey, run, reduced, onReady, onComp
       if (variant === "gold" && modelBody(mesh)) applyGoldFinish(material, mesh.geometry, gold);
       mesh.material = material;
     });
+    clone.updateWorldMatrix(true, true);
+    const arrivalBounds = new THREE.Box3().setFromObject(clone, true);
+    clone.traverse(node => {
+      const mesh = node as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      applySandArrival(mesh.material as THREE.MeshPhysicalMaterial, mesh.matrixWorld.clone(), arrivalBounds, arrival);
+      mesh.castShadow = false;
+    });
     return {
-      scene: clone, top, discs,
+      scene: clone, top, discs, arrivalBounds,
       closed: top.quaternion.clone(),
       // Only the pose comes from the reference; all timing is procedural.
       opened: new THREE.Quaternion(-0.4986691475, -0.4985812604, -0.5014076829, 0.5013343692),
@@ -113,8 +126,13 @@ function Artifact({ quality, variant, rotationKey, run, reduced, onReady, onComp
       rotations: discs.map(d => d.quaternion.clone()),
       scales: discs.map(d => d.scale.clone()),
     };
-  }, [scene, foil, gold, variant, gl]);
-  useEffect(() => { onReady(); }, [onReady]);
+  }, [scene, foil, gold, variant, gl, arrival]);
+  useEffect(() => { onLoaded(); }, [onLoaded]);
+  useEffect(() => () => {
+    model.scene.traverse(node => {
+      if ((node as THREE.Mesh).isMesh) ((node as THREE.Mesh).material as THREE.Material).dispose();
+    });
+  }, [model]);
   useEffect(() => {
     time.current = 0; finished.current = false; hoverX.current = null;
     Object.assign(drag.current, { active: false, yaw: 0, pitch: 0, currentYaw: 0, currentPitch: 0 });
@@ -136,6 +154,17 @@ function Artifact({ quality, variant, rotationKey, run, reduced, onReady, onComp
 
   useFrame((state, delta) => {
     if (!rig.current) return;
+    if (arrivalTime.current < SAND_DURATION + SAND_TAIL) {
+      // Keep the grains' physical clock separate from the eased material front.
+      arrivalTime.current = reduced ? SAND_DURATION + SAND_TAIL
+        : arrivalTime.current < 0 ? 0 : arrivalTime.current + delta;
+      arrival.value = sandProgress(arrivalTime.current, reduced);
+      if (arrival.value === 1 && !arrivalDone.current) {
+        arrivalDone.current = true;
+        model.scene.traverse(node => { if ((node as THREE.Mesh).isMesh) node.castShadow = true; });
+        onReady();
+      }
+    }
     if (run > 0) time.current = reduced ? DURATION : Math.min(time.current + delta, DURATION);
     const t = run > 0 ? time.current : 0;
     const m = choreography(t, variant);
@@ -203,7 +232,7 @@ function Artifact({ quality, variant, rotationKey, run, reduced, onReady, onComp
     // Exact mesh bounds, including lid overshoot and manual disc rotation.
     // A final projection guard keeps every phase inside the UI's safe area.
     model.discs[0].getWorldPosition(discAnchor);
-    bounds.setFromObject(rig.current, true);
+    bounds.setFromObject(model.scene, true);
     let extentX = 0, extentY = 0;
     for (let corner = 0; corner < 8; corner++) {
       projected.set(
@@ -253,7 +282,10 @@ function Artifact({ quality, variant, rotationKey, run, reduced, onReady, onComp
       onPointerCancel={pointerUp}
       onPointerOver={(e) => { if(finished.current && isDisc(e)) gl.domElement.style.cursor = "default"; }}
       onPointerOut={() => { if(!drag.current.active) gl.domElement.style.cursor = finished.current ? "default" : "pointer"; }}>
-      <group scale={22}><primitive object={model.scene} position={[-0.006, -0.075, -0.005]} /></group>
+      <group scale={22}>
+        <primitive object={model.scene} position={[-0.006, -0.075, -0.005]} />
+        <group position={[-0.006, -0.075, -0.005]}><SandArrival bounds={model.arrivalBounds} time={arrivalTime} reduced={reduced} /></group>
+      </group>
       <pointLight ref={glow} position={[0, 0.4, 0]} color={variant === "cursed" ? "#b5ff60" : variant === "murray" ? "#8ce8da" : "#ffbb62"} distance={8} />
     </group>
     <RevealEffects caseRig={rig} variant={variant} time={time} reduced={reduced} anchor={discAnchor} />

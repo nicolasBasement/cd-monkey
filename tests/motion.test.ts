@@ -247,3 +247,55 @@ test("optimized quality assets retain the animation and material contract", asyn
   }
   assert.deepEqual(models[0].nodes,models[1].nodes);
 });
+
+test("sand arrival finishes in 1.3s and skips motion when requested", async () => {
+  const { sandProgress, SAND_DURATION } = await import("../components/sand-material.ts");
+  assert.equal(SAND_DURATION, 1.3);
+  assert.equal(sandProgress(-1, false), 0);
+  assert.equal(sandProgress(0, false), 0);
+  assert.equal(sandProgress(0.65, false), 0.5);
+  assert.equal(sandProgress(1.3, false), 1);
+  assert.equal(sandProgress(100, false), 1);
+  assert.equal(sandProgress(0, true), 1);
+});
+
+test("sand shader composes with existing material hooks and shares progress", async () => {
+  const THREE = await import("three");
+  const { applySandArrival } = await import("../components/sand-material.ts");
+  const material = new THREE.MeshPhysicalMaterial();
+  material.onBeforeCompile = shader => { shader.uniforms.existingFinish = { value: 42 }; };
+  material.customProgramCacheKey = () => "existing-finish";
+  const progress = { value: 0 };
+  applySandArrival(material, new THREE.Matrix4(), new THREE.Box3(new THREE.Vector3(), new THREE.Vector3(1,1,1)), progress);
+  const shader = {
+    uniforms: {}, vertexShader: "#include <begin_vertex>",
+    fragmentShader: "#include <clipping_planes_fragment>\n#include <emissivemap_fragment>",
+  } as unknown as Parameters<typeof material.onBeforeCompile>[0];
+  material.onBeforeCompile(shader, {} as Parameters<typeof material.onBeforeCompile>[1]);
+  assert.equal(shader.uniforms.existingFinish.value, 42);
+  assert.equal(shader.uniforms.uSandProgress, progress);
+  assert.match(shader.fragmentShader, /discard/);
+  assert.doesNotMatch(shader.fragmentShader, /vSandPosition\.y/);
+  assert.match(shader.fragmentShader, /pow\(uSandProgress, localPace\)/);
+  assert.match(shader.fragmentShader, /uSandProgress < 1.0/);
+  assert.equal(material.customProgramCacheKey(), "existing-finish-sand-islands-v2");
+  material.dispose();
+});
+
+
+test("arrival eases independently from staggered, finite grain lifetimes", async () => {
+  const { sandProgress, sandGrain, SAND_DURATION, SAND_TAIL } = await import("../components/sand-material.ts");
+  assert.ok(sandProgress(0.13, false) < 0.1);
+  assert.ok(sandProgress(1.17, false) > 0.9);
+  assert.notEqual(sandGrain(0.4, 0.1).alpha, sandGrain(0.4, 0.8).alpha);
+  for (let i = 0; i < 100; i++) {
+    const seed = i / 100;
+    assert.equal(sandGrain(0, seed).alpha, 0);
+    assert.equal(sandGrain(SAND_DURATION + SAND_TAIL, seed).alpha, 0);
+    for (let t = 0; t < 1.8; t += 0.05) {
+      const grain = sandGrain(t, seed);
+      assert.ok(Object.values(grain).every(Number.isFinite));
+      assert.ok(grain.alpha >= 0 && grain.alpha <= 1);
+    }
+  }
+});

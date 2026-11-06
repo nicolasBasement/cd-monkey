@@ -4,6 +4,7 @@ import { Component, useCallback, useEffect, useRef, useState, type ReactNode } f
 import type { RevealVariant } from "./motion";
 import { DEFAULT_MODEL_QUALITY, type ModelQuality } from "./model-quality";
 import { playReveal } from "./audio";
+import ModelLoader from "./ModelLoader";
 const Scene = dynamic(() => import("./Scene"), { ssr: false });
 class SceneBoundary extends Component<{ children: ReactNode; onError: () => void }, { error: boolean }> {
   state = { error: false };
@@ -16,7 +17,7 @@ export default function Experience() {
   const [run, setRun] = useState(0);
   const [variant, setVariant] = useState<RevealVariant>("treasure");
   const [rotationKey, setRotationKey] = useState(0);
-  const [phase, setPhase] = useState<"loading" | "ready" | "opening" | "revealed" | "error">("loading");
+  const [phase, setPhase] = useState<"loading" | "forming" | "ready" | "opening" | "revealed" | "error">("loading");
   const [sound, setSound] = useState(true);
   const [reduced, setReduced] = useState(false);
   const [info, setInfo] = useState(false);
@@ -30,11 +31,12 @@ export default function Experience() {
     update(); media.addEventListener("change", update);
     return () => { media.removeEventListener("change", update); void context.current?.close(); };
   }, []);
+  const onLoaded = useCallback(() => setPhase("forming"), []);
   const onReady = useCallback(() => setPhase("ready"), []);
   const onComplete = useCallback(() => { busy.current = false; setPhase("revealed"); }, []);
   const onError = useCallback(() => setPhase("error"), []);
   const open = useCallback(() => {
-    if (busy.current || phase === "loading" || phase === "error") return;
+    if (busy.current || (phase !== "ready" && phase !== "revealed")) return;
     busy.current = true;
     setPhase("opening"); setRun(n => n + 1);
     if (sound && !reduced) {
@@ -95,7 +97,7 @@ export default function Experience() {
       <h1>{variant === "gold" ? "Not all that glitters is gold." : variant === "crypt" ? "Some legends wait in the dark." : variant === "cursed" ? "Not every treasure lies dormant." : variant === "treasure" ? "A classic. A treasure." : "Some treasures never rest."}</h1>
       <p>{variant === "gold" ? "A treasure with a touch of a curse." : variant === "crypt" ? "Follow the light. Find your treasure." : variant === "cursed" ? "Break the seal. Unleash the adventure." : variant === "treasure" ? "Open the case. Rediscover the adventure." : "Murray has something to say about that."}</p>
     </section>
-    <section className="stage" data-phase={phase} tabIndex={phase === "ready" || opened ? 0 : -1}
+    <section className="stage" data-phase={phase} aria-busy={phase === "loading" || phase === "forming"} tabIndex={phase === "ready" || opened ? 0 : -1}
       aria-label={opened ? "3D disc. Move your mouse left or right to rotate it, drag on a touchscreen, or use the arrow keys." : "3D Monkey Island case. Click the case or press Enter to open it."}
       onKeyDown={e => {
         if ((phase === "ready" || opened) && (e.key === "Enter" || e.key === " ")) {
@@ -105,12 +107,13 @@ export default function Experience() {
           e.preventDefault(); setRotationKey(n => n + (e.key === "ArrowLeft" ? -0.4 : 0.4));
         }
       }}>
-      <SceneBoundary key={variant + quality} onError={onError}><Scene quality={quality} variant={variant} rotationKey={rotationKey} run={run} reduced={reduced} onReady={onReady} onComplete={onComplete} onOpen={open} /></SceneBoundary>
+      <SceneBoundary key={variant + quality} onError={onError}><Scene quality={quality} variant={variant} rotationKey={rotationKey} run={run} reduced={reduced} onLoaded={onLoaded} onReady={onReady} onComplete={onComplete} onOpen={open} /></SceneBoundary>
     </section>
+    {phase === "loading" && <ModelLoader />}
     <aside className="artifact-label"><span className="label-line" /><div><strong>The Curse of<br />Monkey Island</strong><span>PC · CD-ROM · 1997</span></div></aside>
-    <section className={phase === "loading" || phase === "error" ? "interaction" : "sr-only"}>
+    <section className={phase === "loading" || phase === "forming" || phase === "error" ? "interaction" : "sr-only"}>
       <div className="status" role="status" aria-live="polite">
-        {phase === "loading" ? "Preparing your treasure…" : phase === "error" ? "The 3D scene could not load. Reload the page with WebGL enabled." : phase === "opening" ? "Some things never lose their magic." : opened ? (variant === "treasure" ? "Welcome back, pirate." : "The treasure is yours. So is the curse.") : "Click the case to open it."}
+        {phase === "loading" ? "Preparing your treasure…" : phase === "forming" ? "A treasure takes shape…" : phase === "error" ? "The 3D scene could not load. Reload the page with WebGL enabled." : phase === "opening" ? "Some things never lose their magic." : opened ? (variant === "treasure" ? "Welcome back, pirate." : "The treasure is yours. So is the curse.") : "Click the case to open it."}
       </div>
       {phase === "error" && <button className="open-button" onClick={() => location.reload()}>Try again</button>}
     </section>
