@@ -244,3 +244,5 @@ footer, footer button { font-size: 13px; }
   .download-cta .open-button { font-size: 25px; min-width: 265px; }
   footer, footer button { font-size: 11px; }
 }
+
+@media (max-width: 600px) { .download-cta .download-eyebrow { display: none; } }
