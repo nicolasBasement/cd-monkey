@@ -1,7 +1,7 @@
 export const DURATION = 6.8;
 export const REVEAL_AT = 3.65;
-export type RevealVariant = "treasure" | "murray" | "cursed";
-export const revealAt = (variant: RevealVariant) => variant === "cursed" ? 2.95 : variant === "murray" ? 3.8 : REVEAL_AT;
+export type RevealVariant = "treasure" | "murray" | "cursed" | "crypt";
+export const revealAt = (variant: RevealVariant) => variant === "crypt" ? 3.8 : variant === "cursed" ? 2.95 : variant === "murray" ? 3.8 : REVEAL_AT;
 export const clamp = (x: number) => Math.max(0, Math.min(1, x));
 export const smooth = (x: number) => { const t = clamp(x); return t * t * (3 - 2 * t); };
 export const easeOut = (x: number) => 1 - Math.pow(1 - clamp(x), 3);
@@ -13,6 +13,7 @@ export const spring = (x: number) => {
 export function choreography(time: number, variant: RevealVariant = "treasure") {
   const t = Math.max(0, time);
   const cursed = variant === "cursed";
+  const crypt = variant === "crypt";
   const anticipation = Math.sin(clamp(t / (cursed ? 1.8 : 1.2)) * Math.PI);
   const impact = t - revealAt(variant);
   const haunted = variant === "murray";
@@ -25,20 +26,20 @@ export function choreography(time: number, variant: RevealVariant = "treasure") 
     levitation: haunted ? Math.sin(clamp((t - 0.4) / 4.8) * Math.PI) ** 2 * 0.32 : 0,
     discX: 0,
     discZ: 0,
-    charge: cursed ? smooth(t / 1.6) * (1 - smooth((t - 1.8) / .65)) : smooth(t / 1.1) * (1 - smooth((t - 1.25) / 0.8)),
-    shake: cursed || haunted ? 0 : (Math.sin(t * 75) + Math.sin(t * 113) * 0.45) * 0.016 * anticipation * smooth(t / 0.45),
-    lid: (cursed ? spring((t - 1.65) / .8) : spring((t - 1.15) / 2.0)) * (1 - close) + rebound,
+    charge: crypt ? smooth(t / 1.8) * (1 - smooth((t - 3) / 1.2)) : cursed ? smooth(t / 1.6) * (1 - smooth((t - 1.8) / .65)) : smooth(t / 1.1) * (1 - smooth((t - 1.25) / 0.8)),
+    shake: crypt || cursed || haunted ? 0 : (Math.sin(t * 75) + Math.sin(t * 113) * 0.45) * 0.016 * anticipation * smooth(t / 0.45),
+    lid: (crypt ? smooth((t - 1.3) / 1.2) : cursed ? spring((t - 1.65) / .8) : spring((t - 1.15) / 2.0)) * (1 - close) + rebound,
     presentation: smooth((t - 4.4) / 1.7),
     tension: smooth((t - 2.65) / 0.3) * (1 - smooth((t - 3.2) / 0.45)),
-    disc: cursed ? easeOut((t - 2.25) / .7) : haunted ? .6 * smooth((t - 1.95) / .85) + .4 * smooth((t - 3.1) / .7) : spring((t - 1.95) / 2.1),
+    disc: crypt ? smooth((t - 2.55) / 1.25) : cursed ? easeOut((t - 2.25) / .7) : haunted ? .6 * smooth((t - 1.95) / .85) + .4 * smooth((t - 3.1) / .7) : spring((t - 1.95) / 2.1),
     // Maldito first lifts flat out of the tray; camera-facing rotation owns its tilt.
-    tilt: cursed ? 0 : smooth((t - 2) / 1.3),
-    cameraFacing: cursed ? smooth((t - 2.45) / .35) : smooth((t - 2.05) / 0.75),
+    tilt: cursed || crypt ? 0 : smooth((t - 2) / 1.3),
+    cameraFacing: crypt ? smooth((t - 3.15) / .45) : cursed ? smooth((t - 2.45) / .35) : smooth((t - 2.05) / 0.75),
     // Slow edge-on anticipation, then a fast turn into the reveal.
-    turn: haunted || cursed ? 0 : smooth((t - 2.1) / 0.75) * Math.PI * 0.5 + easeOut((t - 3.2) / 0.45) * Math.PI * 1.5,
+    turn: crypt || haunted || cursed ? 0 : smooth((t - 2.1) / 0.75) * Math.PI * 0.5 + easeOut((t - 3.2) / 0.45) * Math.PI * 1.5,
     camera: smooth((t - 1.0) / 3.7),
-    cameraPunch: impact < 0 || haunted ? 0 : Math.sin(impact * 28) * Math.exp(-impact * 8) * 0.24,
-    flash: impact < 0 ? 0 : Math.exp(-impact * 4),
+    cameraPunch: impact < 0 || haunted || crypt ? 0 : Math.sin(impact * 28) * Math.exp(-impact * 8) * 0.24,
+    flash: impact < 0 || crypt ? 0 : Math.exp(-impact * 4),
     rays: impact < 0 ? 0 : Math.exp(-impact * (cursed ? 3 : 0.95)) * (1 - smooth((t - 6) / 0.8)),
     shockwave: clamp(impact / 1.45),
     foil: t < 5.3 ? smooth((t - 3.85) / 1.1) : smooth((t - 5.3) / 1.2),

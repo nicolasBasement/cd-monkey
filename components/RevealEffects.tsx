@@ -3,11 +3,13 @@ import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import * as THREE from "three";
+import CryptAtmosphere from "./CryptAtmosphere";
 import MurrayParticles from "./MurrayParticles";
 import { choreography, revealAt, DURATION, smooth, type RevealVariant } from "./motion";
 
 export default function RevealEffects({ variant, time, reduced, anchor, caseRig }: { caseRig: RefObject<THREE.Group | null>; variant: RevealVariant; time: { current: number }; reduced: boolean; anchor: THREE.Vector3 }) {
   const haunted = variant !== "treasure";
+  const crypt = variant === "crypt";
   const cursed = variant === "cursed";
   const color = useMemo(() => haunted ? new THREE.Color(2.2, 5, 4.2) : new THREE.Color(4, 2.7, 1), [haunted]);
   const rays = useRef<THREE.Mesh>(null);
@@ -51,21 +53,21 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
     up.setFromMatrixColumn(camera.matrixWorld, 1);
     if (light.current) {
       light.current.position.copy(anchor).addScaledVector(direction, -0.8);
-      light.current.intensity = reduced ? 0 : m.flash * 28;
+      light.current.intensity = reduced || crypt ? 0 : m.flash * 28;
     }
     if (glint.current) {
-      glint.current.visible = !reduced && m.foil > 0.12 && m.foil < 0.88;
+      glint.current.visible = !crypt && !reduced && m.foil > 0.12 && m.foil < 0.88;
       glint.current.position.copy(anchor).addScaledVector(right, (m.foil - 0.5) * 1.8).addScaledVector(up, 0.42).addScaledVector(direction, -0.25);
       glint.current.scale.setScalar(0.45 + Math.sin(m.foil * Math.PI) * 0.4);
       (glint.current.material as THREE.SpriteMaterial).opacity = Math.sin(m.foil * Math.PI);
     }
     if (rays.current) {
-      rays.current.visible = !reduced && m.rays > 0.005;
+      rays.current.visible = !crypt && !reduced && m.rays > 0.005;
       rays.current.quaternion.copy(camera.quaternion);
       rays.current.position.copy(anchor).addScaledVector(direction, 0.35);
     }
     if (ring.current) {
-      ring.current.visible = !reduced && age > 0 && age < 1.45;
+      ring.current.visible = !crypt && !reduced && age > 0 && age < 1.45;
       if (cursed) {
         ring.current.position.copy(anchor).addScaledVector(direction, .3);
         ring.current.quaternion.copy(camera.quaternion);
@@ -74,7 +76,7 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
       (ring.current.material as THREE.MeshBasicMaterial).opacity = (1 - m.shockwave) * 0.85;
     }
     if (outline.current) {
-      outline.current.visible = !cursed && !reduced && m.charge > 0.01;
+      outline.current.visible = !cursed && !crypt && !reduced && m.charge > 0.01;
       if (caseRig.current) outline.current.matrix.copy(caseRig.current.matrixWorld);
       outline.current.traverse(object => {
         if (object instanceof THREE.Mesh && object.material instanceof THREE.ShaderMaterial) {
@@ -84,7 +86,7 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
       });
     }
     if (dust.current) {
-      dust.current.visible = !cursed && !reduced && ((age > 0 && age < 3.1) || m.charge > 0.1);
+      dust.current.visible = !cursed && !crypt && !reduced && ((age > 0 && age < 3.1) || m.charge > 0.1);
       vertices.forEach(([x, y, z, speed], i) => {
         if (age < 0) {
           const phase = (t * 0.7 + i / 160) % 1;
@@ -103,6 +105,7 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
     }
   });
   return <>
+    {crypt && <CryptAtmosphere time={time} reduced={reduced} />}
     {variant === "murray" && <MurrayParticles time={time} anchor={anchor} reduced={reduced} />}
     <group ref={outline} matrixAutoUpdate={false}>
       <Line points={[[-1.54, 0, -1.3], [1.45, 0, -1.3], [1.45, 0, 1.4], [-1.54, 0, 1.4], [-1.54, 0, -1.3]]} color={haunted ? color : new THREE.Color(4, 2.2, 0.6)} lineWidth={2.2} transparent toneMapped={false} />

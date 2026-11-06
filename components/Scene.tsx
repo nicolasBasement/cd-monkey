@@ -198,7 +198,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
     zoom.current = fittedZoom(baseZoom, correction, reduced ? null : zoom.current, delta);
     perspective.zoom = zoom.current;
     perspective.updateProjectionMatrix();
-    if (glow.current) glow.current.intensity = 0.05 + m.charge * 8 + m.flash * 12;
+    if (glow.current) glow.current.intensity = 0.05 + m.charge * (variant === "crypt" ? 3 : 8) + m.flash * 12;
     if (run && t >= DURATION && !finished.current) { finished.current = true; gl.domElement.style.cursor = "default"; onComplete(); }
   });
   function isDisc(e: ThreeEvent<PointerEvent>) {
@@ -240,9 +240,9 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
 }
 export default function Scene(props: Props) {
   return <Canvas dpr={[1, 1.5]} camera={{ position: props.variant === "murray" ? [-2.3, 5.6, 6.3] : [2.3, 5.6, 6.3], fov: 37 }} gl={{ antialias: true, alpha: true }} shadows>
-    <ambientLight intensity={0.75} />
-    <directionalLight position={[3, 7, 5]} intensity={3} color="#e4e9ff" />
-    <directionalLight position={[-4, 2, -2]} intensity={5} color={props.variant === "cursed" ? "#9bdb5c" : props.variant === "murray" ? "#75dace" : "#657bff"} />
+    <ambientLight intensity={props.variant === "crypt" ? 0.35 : 0.75} />
+    <directionalLight position={[3, 7, 5]} intensity={props.variant === "crypt" ? 1.1 : 3} color="#e4e9ff" />
+    <directionalLight position={[-4, 2, -2]} intensity={props.variant === "crypt" ? 1.8 : 5} color={props.variant === "cursed" ? "#9bdb5c" : props.variant === "murray" ? "#75dace" : "#657bff"} />
     <Suspense fallback={null}>
       <Environment resolution={256}>
         <Lightformer position={[0, 5, -2]} scale={[7, 3, 1]} intensity={4} color="#e4edff" rotation-x={Math.PI / 2} />

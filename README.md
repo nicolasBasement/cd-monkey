@@ -70,3 +70,6 @@ La presentación orienta el disco hacia la cámara durante la extracción (2.05�
 Tercera opción: presión sin temblor, luz verde, apertura a 1.65 s, extracción frontal corta a 2.25 s y destello/aro a 2.95 s. Sin calaveras ni lluvia de partículas. Murray conserva sus calaveras pero ahora sube en línea recta, pausa brevemente y termina de levitar sin vueltas. Tesoro conserva su coreografía.
 
 Maldito: el CD sale plano de la bandeja antes de girar (2.45–2.8 s). Se desactiva el tilt compartido para evitar que rote dentro de la caja antes de comenzar la extracción.
+
+### D · La cripta
+Apertura lenta y extracción recta bajo un haz diagonal dorado, con iluminación más oscura. Niebla baja y polvo procedural en shaders sin imágenes ni rectángulos visibles. La niebla se disipa antes del CTA; en movimiento reducido se desactiva y el haz queda estático. Sin explosión, aro ni calaveras. El disco despeja la bandeja antes de inclinarse.

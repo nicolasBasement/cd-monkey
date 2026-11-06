@@ -156,3 +156,18 @@ test("cursed disc clears the tray before either rotation channel activates", () 
     assert.ok(Math.abs(before.disc-after.disc)<.0001);
   }
 });
+test("crypt opens slowly, lifts before tilting, and avoids explosive motion", () => {
+  assert.equal(choreography(1.3,"crypt").lid,0);
+  assert.ok(choreography(2.5,"crypt").lid > .99);
+  assert.equal(choreography(2.55,"crypt").disc,0);
+  assert.ok(choreography(3.15,"crypt").disc > .45);
+  assert.equal(choreography(3.15,"crypt").cameraFacing,0);
+  assert.equal(choreography(3.8,"crypt").cameraFacing,1);
+  const end=choreography(DURATION,"crypt");
+  assert.equal(end.disc,1); assert.ok(Math.abs(end.lid)<1e-10);
+  for(let t=0;t<=DURATION;t+=.02) {
+    const m=choreography(t,"crypt");
+    assert.equal(m.turn,0); assert.equal(m.shake,0); assert.equal(m.flash,0); assert.equal(m.cameraPunch,0);
+    for(const value of Object.values(m)) assert.ok(Number.isFinite(value));
+  }
+});

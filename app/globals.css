@@ -256,3 +256,15 @@ footer, footer button { font-size: 13px; }
   .wave { display: none; }
   .variant-cursed h1 { font-size: 34px; }
 }
+
+.variant-crypt { --gold: #e7d2a0; background: radial-gradient(ellipse at 40% 35%, #1b353a 0%, #0d1c25 35%, #060d18 75%); }
+.variant-crypt .ambient { opacity: .25; }
+.variant-crypt h1 { max-width: 650px; }
+@media(max-width:600px) {
+  header { flex-wrap: wrap; align-content: center; gap: 6px; height: 100px; }
+  .variant-switch { width: 100%; justify-content: space-between; }
+  .variant-switch button { padding: 4px 5px; font-size: 17px; }
+  .sound-button { margin-left: auto; }
+  .variant-crypt h1 { font-size: 33px; max-width: 340px; }
+  .intro { top: 120px; }
+}
