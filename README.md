@@ -65,3 +65,6 @@ Las fuentes se sirven localmente; sus licencias están en `public/fonts/`. No se
 El cierre de ambas variantes alinea el plano del CD con la cámara y muestra el CTA de descarga. Configurá `NEXT_PUBLIC_GAME_DOWNLOAD_URL` con el enlace real antes de compilar; sin enlace se muestra deshabilitado y con “Descarga próximamente”. El giro con mouse/touch continúa disponible sin cursor de doble flecha.
 
 La presentación orienta el disco hacia la cámara durante la extracción (2.05–2.8 s), antes del destello. La caja se retira a un costado para separar siluetas. El contorno de carga copia la matriz mundial del rig, incluida la levitación de Murray. Tipografías locales Pirata One e IM Fell English (licencias OFL en public/fonts); CTA de madera construido con CSS.
+
+### C · Maldito
+Tercera opción: presión sin temblor, luz verde, apertura a 1.65 s, extracción frontal corta a 2.25 s y destello/aro a 2.95 s. Sin calaveras ni lluvia de partículas. Murray conserva sus calaveras pero ahora sube en línea recta, pausa brevemente y termina de levitar sin vueltas. Tesoro conserva su coreografía.

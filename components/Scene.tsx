@@ -61,7 +61,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
       if (mesh.name === "CD_low002" || mesh.name === "CD_low.002") {
         mesh.material = new THREE.MeshPhysicalMaterial({
           name: "Clear tinted hub",
-          color: variant === "murray" ? "#416869" : "#506583",
+          color: variant !== "treasure" ? "#416869" : "#506583",
           transparent: true, opacity: 0.18, depthWrite: false,
           metalness: 0, roughness: 0.075, clearcoat: 1, clearcoatRoughness: 0.06,
           envMapIntensity: 0.2, side: THREE.FrontSide,
@@ -233,7 +233,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
       onPointerOver={(e) => { if(finished.current && isDisc(e)) gl.domElement.style.cursor = "default"; }}
       onPointerOut={() => { if(!drag.current.active) gl.domElement.style.cursor = finished.current ? "default" : "pointer"; }}>
       <group scale={22}><primitive object={model.scene} position={[-0.006, -0.075, -0.005]} /></group>
-      <pointLight ref={glow} position={[0, 0.4, 0]} color={variant === "murray" ? "#8ce8da" : "#ffbb62"} distance={8} />
+      <pointLight ref={glow} position={[0, 0.4, 0]} color={variant === "cursed" ? "#b5ff60" : variant === "murray" ? "#8ce8da" : "#ffbb62"} distance={8} />
     </group>
     <RevealEffects caseRig={rig} variant={variant} time={time} reduced={reduced} anchor={discAnchor} />
   </>;
@@ -242,7 +242,7 @@ export default function Scene(props: Props) {
   return <Canvas dpr={[1, 1.5]} camera={{ position: props.variant === "murray" ? [-2.3, 5.6, 6.3] : [2.3, 5.6, 6.3], fov: 37 }} gl={{ antialias: true, alpha: true }} shadows>
     <ambientLight intensity={0.75} />
     <directionalLight position={[3, 7, 5]} intensity={3} color="#e4e9ff" />
-    <directionalLight position={[-4, 2, -2]} intensity={5} color={props.variant === "murray" ? "#75dace" : "#657bff"} />
+    <directionalLight position={[-4, 2, -2]} intensity={5} color={props.variant === "cursed" ? "#9bdb5c" : props.variant === "murray" ? "#75dace" : "#657bff"} />
     <Suspense fallback={null}>
       <Environment resolution={256}>
         <Lightformer position={[0, 5, -2]} scale={[7, 3, 1]} intensity={4} color="#e4edff" rotation-x={Math.PI / 2} />

@@ -1,7 +1,7 @@
 export const DURATION = 6.8;
 export const REVEAL_AT = 3.65;
-export type RevealVariant = "treasure" | "murray";
-export const revealAt = (variant: RevealVariant) => variant === "murray" ? 3.8 : REVEAL_AT;
+export type RevealVariant = "treasure" | "murray" | "cursed";
+export const revealAt = (variant: RevealVariant) => variant === "cursed" ? 2.95 : variant === "murray" ? 3.8 : REVEAL_AT;
 export const clamp = (x: number) => Math.max(0, Math.min(1, x));
 export const smooth = (x: number) => { const t = clamp(x); return t * t * (3 - 2 * t); };
 export const easeOut = (x: number) => 1 - Math.pow(1 - clamp(x), 3);
@@ -12,32 +12,33 @@ export const spring = (x: number) => {
 };
 export function choreography(time: number, variant: RevealVariant = "treasure") {
   const t = Math.max(0, time);
-  const anticipation = Math.sin(clamp(t / 1.2) * Math.PI);
+  const cursed = variant === "cursed";
+  const anticipation = Math.sin(clamp(t / (cursed ? 1.8 : 1.2)) * Math.PI);
   const impact = t - revealAt(variant);
   const haunted = variant === "murray";
-  const flight = smooth((t - 1.95) / 1.85);
+
   const close = smooth((t - 4.35) / 0.85);
   const rebound = Math.sin(clamp((t - 5.2) / 0.42) * Math.PI) * 0.045;
   return {
     anticipation,
-    caseYaw: haunted ? -0.65 * smooth(t / 1.1) * (1 - smooth((t - 4.1) / 1.8)) : 0,
+    caseYaw: 0,
     levitation: haunted ? Math.sin(clamp((t - 0.4) / 4.8) * Math.PI) ** 2 * 0.32 : 0,
-    discX: haunted ? Math.sin(flight * Math.PI) * 0.055 : 0,
-    discZ: haunted ? Math.sin(flight * Math.PI * 2) * Math.sin(flight * Math.PI) * 0.04 : 0,
-    charge: smooth(t / 1.1) * (1 - smooth((t - 1.25) / 0.8)),
-    shake: (Math.sin(t * 75) + Math.sin(t * 113) * 0.45) * 0.016 * anticipation * smooth(t / 0.45),
-    lid: spring((t - 1.15) / 2.0) * (1 - close) + rebound,
+    discX: 0,
+    discZ: 0,
+    charge: cursed ? smooth(t / 1.6) * (1 - smooth((t - 1.8) / .65)) : smooth(t / 1.1) * (1 - smooth((t - 1.25) / 0.8)),
+    shake: cursed || haunted ? 0 : (Math.sin(t * 75) + Math.sin(t * 113) * 0.45) * 0.016 * anticipation * smooth(t / 0.45),
+    lid: (cursed ? spring((t - 1.65) / .8) : spring((t - 1.15) / 2.0)) * (1 - close) + rebound,
     presentation: smooth((t - 4.4) / 1.7),
     tension: smooth((t - 2.65) / 0.3) * (1 - smooth((t - 3.2) / 0.45)),
-    disc: spring((t - 1.95) / 2.1),
+    disc: cursed ? easeOut((t - 2.25) / .7) : haunted ? .6 * smooth((t - 1.95) / .85) + .4 * smooth((t - 3.1) / .7) : spring((t - 1.95) / 2.1),
     tilt: smooth((t - 2) / 1.3),
-    cameraFacing: smooth((t - 2.05) / 0.75),
+    cameraFacing: cursed ? smooth((t - 2.15) / .3) : smooth((t - 2.05) / 0.75),
     // Slow edge-on anticipation, then a fast turn into the reveal.
-    turn: haunted ? -Math.PI * 2 * flight : smooth((t - 2.1) / 0.75) * Math.PI * 0.5 + easeOut((t - 3.2) / 0.45) * Math.PI * 1.5,
+    turn: haunted || cursed ? 0 : smooth((t - 2.1) / 0.75) * Math.PI * 0.5 + easeOut((t - 3.2) / 0.45) * Math.PI * 1.5,
     camera: smooth((t - 1.0) / 3.7),
-    cameraPunch: impact < 0 ? 0 : Math.sin(impact * 28) * Math.exp(-impact * 8) * 0.24,
+    cameraPunch: impact < 0 || haunted ? 0 : Math.sin(impact * 28) * Math.exp(-impact * 8) * 0.24,
     flash: impact < 0 ? 0 : Math.exp(-impact * 4),
-    rays: impact < 0 ? 0 : Math.exp(-impact * 0.95) * (1 - smooth((t - 6) / 0.8)),
+    rays: impact < 0 ? 0 : Math.exp(-impact * (cursed ? 3 : 0.95)) * (1 - smooth((t - 6) / 0.8)),
     shockwave: clamp(impact / 1.45),
     foil: t < 5.3 ? smooth((t - 3.85) / 1.1) : smooth((t - 5.3) / 1.2),
   };

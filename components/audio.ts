@@ -18,7 +18,7 @@ export function playReveal(context: AudioContext, variant: RevealVariant = "trea
   };
   // Low rumble builds first; a filtered noise sweep bridges the held turn.
   tone(0, 42, 1.4, 0.2, 95);
-  tone(1.15, 1600, 0.075, 0.12, 220);
+  tone(variant === "cursed" ? 1.65 : 1.15, 1600, 0.075, 0.12, 220);
   const buffer = context.createBuffer(1, context.sampleRate * 1.3, context.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
@@ -34,7 +34,7 @@ export function playReveal(context: AudioContext, variant: RevealVariant = "trea
   noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(master);
   noise.start(start + REVEAL_AT - 1.3); noise.stop(start + REVEAL_AT);
   tone(REVEAL_AT, 100, 0.7, 0.35, 34);
-  (variant === "murray" ? [220, 261.63, 329.63, 440] : [261.63, 392, 523.25, 783.99]).forEach((f, i) => tone(REVEAL_AT + i * 0.055, f, 2.0, 0.065));
+  (variant === "cursed" ? [146.83, 220, 293.66, 440] : variant === "murray" ? [220, 261.63, 329.63, 440] : [261.63, 392, 523.25, 783.99]).forEach((f, i) => tone(REVEAL_AT + i * 0.055, f, 2.0, 0.065));
   // Plastic latch closes after the disc is safely clear, then a tiny shimmer.
   tone(5.2, 1250, 0.06, 0.12, 160);
   tone(5.24, 240, 0.10, 0.06, 80);

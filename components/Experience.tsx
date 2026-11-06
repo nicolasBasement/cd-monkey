@@ -65,6 +65,7 @@ export default function Experience() {
       <div className="variant-switch" role="group" aria-label="Elegir animación">
         <button aria-pressed={variant === "treasure"} onClick={() => selectVariant("treasure")}><span>A</span> Tesoro</button>
         <button aria-pressed={variant === "murray"} onClick={() => selectVariant("murray")}><span>B</span> Murray</button>
+        <button aria-pressed={variant === "cursed"} onClick={() => selectVariant("cursed")}><span>C</span> Maldito</button>
       </div>
       <button className="sound-button" onClick={toggleSound} aria-pressed={sound} aria-label={sound ? "Desactivar sonido" : "Activar sonido"}>
         <span className={`wave ${sound ? "active" : ""}`} aria-hidden="true">{[0,1,2,3,4].map(i => <i key={i} />)}</span>
@@ -73,8 +74,8 @@ export default function Experience() {
     </header>
     <section className="intro">
       <div className="collection"><span /> Del archivo, a tus manos</div>
-      <h1>{variant === "treasure" ? "Un clásico. Un tesoro." : "Hay tesoros que no descansan."}</h1>
-      <p>{variant === "treasure" ? "Abrí la caja. Volvé a descubrirlo." : "Murray tiene algo que decir al respecto."}</p>
+      <h1>{variant === "cursed" ? "No todos los tesoros duermen." : variant === "treasure" ? "Un clásico. Un tesoro." : "Hay tesoros que no descansan."}</h1>
+      <p>{variant === "cursed" ? "Rompé el sello. Liberá la aventura." : variant === "treasure" ? "Abrí la caja. Volvé a descubrirlo." : "Murray tiene algo que decir al respecto."}</p>
     </section>
     <section className="stage" data-phase={phase} tabIndex={phase === "ready" || opened ? 0 : -1}
       aria-label={opened ? "Disco 3D. Mové el mouse a izquierda o derecha para girarlo; en touch, arrastrá. También podés usar las flechas." : "Caja de Monkey Island en 3D. Hacé clic en la caja o presioná Enter para abrirla."}

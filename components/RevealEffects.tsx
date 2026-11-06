@@ -7,7 +7,8 @@ import MurrayParticles from "./MurrayParticles";
 import { choreography, revealAt, DURATION, smooth, type RevealVariant } from "./motion";
 
 export default function RevealEffects({ variant, time, reduced, anchor, caseRig }: { caseRig: RefObject<THREE.Group | null>; variant: RevealVariant; time: { current: number }; reduced: boolean; anchor: THREE.Vector3 }) {
-  const haunted = variant === "murray";
+  const haunted = variant !== "treasure";
+  const cursed = variant === "cursed";
   const color = useMemo(() => haunted ? new THREE.Color(2.2, 5, 4.2) : new THREE.Color(4, 2.7, 1), [haunted]);
   const rays = useRef<THREE.Mesh>(null);
   const ring = useRef<THREE.Mesh>(null);
@@ -65,11 +66,15 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
     }
     if (ring.current) {
       ring.current.visible = !reduced && age > 0 && age < 1.45;
+      if (cursed) {
+        ring.current.position.copy(anchor).addScaledVector(direction, .3);
+        ring.current.quaternion.copy(camera.quaternion);
+      }
       ring.current.scale.setScalar(0.25 + m.shockwave * 4.8);
       (ring.current.material as THREE.MeshBasicMaterial).opacity = (1 - m.shockwave) * 0.85;
     }
     if (outline.current) {
-      outline.current.visible = !reduced && m.charge > 0.01;
+      outline.current.visible = !cursed && !reduced && m.charge > 0.01;
       if (caseRig.current) outline.current.matrix.copy(caseRig.current.matrixWorld);
       outline.current.traverse(object => {
         if (object instanceof THREE.Mesh && object.material instanceof THREE.ShaderMaterial) {
@@ -79,7 +84,7 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
       });
     }
     if (dust.current) {
-      dust.current.visible = !reduced && ((age > 0 && age < 3.1) || m.charge > 0.1);
+      dust.current.visible = !cursed && !reduced && ((age > 0 && age < 3.1) || m.charge > 0.1);
       vertices.forEach(([x, y, z, speed], i) => {
         if (age < 0) {
           const phase = (t * 0.7 + i / 160) % 1;
@@ -98,7 +103,7 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
     }
   });
   return <>
-    {haunted && <MurrayParticles time={time} anchor={anchor} reduced={reduced} />}
+    {variant === "murray" && <MurrayParticles time={time} anchor={anchor} reduced={reduced} />}
     <group ref={outline} matrixAutoUpdate={false}>
       <Line points={[[-1.54, 0, -1.3], [1.45, 0, -1.3], [1.45, 0, 1.4], [-1.54, 0, 1.4], [-1.54, 0, -1.3]]} color={haunted ? color : new THREE.Color(4, 2.2, 0.6)} lineWidth={2.2} transparent toneMapped={false} />
     </group>

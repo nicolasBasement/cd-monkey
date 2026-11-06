@@ -246,3 +246,13 @@ footer, footer button { font-size: 13px; }
 }
 
 @media (max-width: 600px) { .download-cta .download-eyebrow { display: none; } }
+
+.variant-cursed { --gold: #d6e6a3; background: radial-gradient(ellipse at 50% 46%, #324738 0%, #182b2c 30%, #101b26 55%, #080e20 85%); }
+@media (max-width: 600px) {
+  header { margin: 0 4%; }
+  .variant-switch { gap: 0; }
+  .variant-switch button { padding: 5px 7px; font-size: 18px; gap: 4px; }
+  .sound-button { padding: 5px; gap: 6px; font-size: 12px; }
+  .wave { display: none; }
+  .variant-cursed h1 { font-size: 34px; }
+}

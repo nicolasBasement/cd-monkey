@@ -74,16 +74,16 @@ test("final pose stays continuous through the interaction handoff", () => {
     assert.ok(Math.abs(before[key] - after[key]) < .000001, key);
 });
 
-test("treasure is unchanged; haunted variation has its own orbit and reveal", async () => {
+test("treasure is unchanged; Murray levitates without a lateral orbit", async () => {
   const { revealAt } = await import("../components/motion.ts");
   for (let t = 0; t <= DURATION; t += .1) assert.deepEqual(choreography(t), choreography(t, "treasure"));
   assert.notEqual(revealAt("murray"), revealAt("treasure"));
   assert.equal(choreography(2.5, "treasure").discX, 0);
-  assert.ok(choreography(2.5, "murray").discX > .01);
+  assert.equal(choreography(2.5, "murray").discX, 0);
   assert.ok(choreography(2, "murray").levitation > .1);
   const end = choreography(DURATION, "murray");
   for(const key of ["lid", "caseYaw", "levitation", "discX", "discZ"] as const) assert.ok(Math.abs(end[key]) < 1e-10, key);
-  assert.equal(end.turn, -Math.PI * 2);
+  assert.equal(end.turn, 0);
 });
 test("Murray particles stagger, fade, and fully disappear before interaction", async () => {
   const { MURRAY_COUNT, murrayParticle } = await import("../components/murray-motion.ts");
@@ -120,4 +120,24 @@ test("disc faces the camera during extraction, before either reveal", () => {
     assert.equal(choreography(2.8, variant).cameraFacing, 1);
     assert.equal(choreography(DURATION, variant).cameraFacing, 1);
   }
+});
+
+test("Murray pauses in a straight extraction without spinning", () => {
+  assert.equal(choreography(2.85, "murray").disc, .6);
+  assert.equal(choreography(3.05, "murray").disc, .6);
+  for(let t=0; t<=DURATION; t+=.05) {
+    const m=choreography(t, "murray");
+    assert.equal(m.turn,0); assert.equal(m.discX,0); assert.equal(m.discZ,0);
+  }
+});
+test("cursed reveal builds pressure, opens before extraction and settles", () => {
+  assert.ok(choreography(1.5, "cursed").charge > .9);
+  assert.equal(choreography(1.5, "cursed").lid, 0);
+  assert.equal(choreography(2.25, "cursed").disc, 0);
+  assert.ok(choreography(2.25, "cursed").lid > .9);
+  assert.ok(choreography(2.6, "cursed").cameraFacing > .99);
+  assert.equal(choreography(2.95, "cursed").flash, 1);
+  const end=choreography(DURATION, "cursed");
+  assert.equal(end.disc, 1); assert.ok(Math.abs(end.lid)<1e-10); assert.equal(end.turn,0);
+  for(let t=0; t<=DURATION; t+=.02) for(const value of Object.values(choreography(t,"cursed"))) assert.ok(Number.isFinite(value));
 });
