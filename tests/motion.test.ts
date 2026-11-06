@@ -33,7 +33,7 @@ test("framing reserves room for controls on desktop, mobile and short screens", 
   for (const [w, h] of [[1440,960], [1366,768], [390,844], [320,720], [1024,720]]) {
     const f = framing(w, h);
     assert.ok(f.zoom > 0 && f.zoom <= 0.76);
-    assert.ok(h * 0.8 * f.zoom <= h - 110 - (w < 700 ? 235 : 245) + 0.01);
+    assert.ok(h * 0.8 * f.zoom <= h - 320 + 0.01);
     assert.ok(h * 0.52 * f.zoom <= w - 40 + 0.01);
   }
 });
@@ -72,4 +72,32 @@ test("final pose stays continuous through the interaction handoff", () => {
   const after = choreography(DURATION + .0001);
   for(const key of ["lid","disc","tilt","turn","presentation","camera"] as const)
     assert.ok(Math.abs(before[key] - after[key]) < .000001, key);
+});
+
+test("treasure is unchanged; haunted variation has its own orbit and reveal", async () => {
+  const { revealAt } = await import("../components/motion.ts");
+  for (let t = 0; t <= DURATION; t += .1) assert.deepEqual(choreography(t), choreography(t, "treasure"));
+  assert.notEqual(revealAt("murray"), revealAt("treasure"));
+  assert.equal(choreography(2.5, "treasure").discX, 0);
+  assert.ok(choreography(2.5, "murray").discX > .01);
+  assert.ok(choreography(2, "murray").levitation > .1);
+  const end = choreography(DURATION, "murray");
+  for(const key of ["lid", "caseYaw", "levitation", "discX", "discZ"] as const) assert.ok(Math.abs(end[key]) < 1e-10, key);
+  assert.equal(end.turn, -Math.PI * 2);
+});
+test("Murray particles stagger, fade, and fully disappear before interaction", async () => {
+  const { MURRAY_COUNT, murrayParticle } = await import("../components/murray-motion.ts");
+  assert.equal(MURRAY_COUNT, 4);
+  for(let i = 0; i < MURRAY_COUNT; i++) {
+    assert.equal(murrayParticle(0, i).visible, false);
+    assert.equal(murrayParticle(4.6, i).visible, true);
+    assert.equal(murrayParticle(DURATION, i).visible, false);
+    for(let t = 0; t < DURATION; t += .02) {
+      const p = murrayParticle(t, i);
+      assert.ok(p.opacity >= 0 && p.opacity <= .9);
+      assert.ok(Number.isFinite(p.x) && Number.isFinite(p.rotation));
+    }
+  }
+  assert.equal(murrayParticle(3.95, 0).visible, true);
+  assert.equal(murrayParticle(3.95, 3).visible, false);
 });

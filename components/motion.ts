@@ -1,5 +1,7 @@
 export const DURATION = 6.8;
 export const REVEAL_AT = 3.65;
+export type RevealVariant = "treasure" | "murray";
+export const revealAt = (variant: RevealVariant) => variant === "murray" ? 3.8 : REVEAL_AT;
 export const clamp = (x: number) => Math.max(0, Math.min(1, x));
 export const smooth = (x: number) => { const t = clamp(x); return t * t * (3 - 2 * t); };
 export const easeOut = (x: number) => 1 - Math.pow(1 - clamp(x), 3);
@@ -8,14 +10,20 @@ export const spring = (x: number) => {
   // The end blends into the exact resting pose instead of snapping to it.
   return 1 - Math.exp(-7 * t) * Math.cos(10 * t) * (1 - smooth((t - 0.8) / 0.2));
 };
-export function choreography(time: number) {
+export function choreography(time: number, variant: RevealVariant = "treasure") {
   const t = Math.max(0, time);
   const anticipation = Math.sin(clamp(t / 1.2) * Math.PI);
-  const impact = t - REVEAL_AT;
+  const impact = t - revealAt(variant);
+  const haunted = variant === "murray";
+  const flight = smooth((t - 1.95) / 1.85);
   const close = smooth((t - 4.35) / 0.85);
   const rebound = Math.sin(clamp((t - 5.2) / 0.42) * Math.PI) * 0.045;
   return {
     anticipation,
+    caseYaw: haunted ? -0.65 * smooth(t / 1.1) * (1 - smooth((t - 4.1) / 1.8)) : 0,
+    levitation: haunted ? Math.sin(clamp((t - 0.4) / 4.8) * Math.PI) ** 2 * 0.32 : 0,
+    discX: haunted ? Math.sin(flight * Math.PI) * 0.055 : 0,
+    discZ: haunted ? Math.sin(flight * Math.PI * 2) * Math.sin(flight * Math.PI) * 0.04 : 0,
     charge: smooth(t / 1.1) * (1 - smooth((t - 1.25) / 0.8)),
     shake: (Math.sin(t * 75) + Math.sin(t * 113) * 0.45) * 0.016 * anticipation * smooth(t / 0.45),
     lid: spring((t - 1.15) / 2.0) * (1 - close) + rebound,
@@ -24,7 +32,7 @@ export function choreography(time: number) {
     disc: spring((t - 1.95) / 2.1),
     tilt: smooth((t - 2) / 1.3),
     // Slow edge-on anticipation, then a fast turn into the reveal.
-    turn: smooth((t - 2.1) / 0.75) * Math.PI * 0.5 + easeOut((t - 3.2) / 0.45) * Math.PI * 1.5,
+    turn: haunted ? -Math.PI * 2 * flight : smooth((t - 2.1) / 0.75) * Math.PI * 0.5 + easeOut((t - 3.2) / 0.45) * Math.PI * 1.5,
     camera: smooth((t - 1.0) / 3.7),
     cameraPunch: impact < 0 ? 0 : Math.sin(impact * 28) * Math.exp(-impact * 8) * 0.24,
     flash: impact < 0 ? 0 : Math.exp(-impact * 4),
@@ -36,8 +44,8 @@ export function choreography(time: number) {
 
 // Reserve real screen space for the header and controls, not a fixed aspect ratio.
 export function framing(width: number, height: number) {
-  const top = 110;
-  const bottom = width < 700 ? 235 : 245;
+  const top = 160;
+  const bottom = 160;
   const usableHeight = Math.max(160, height - top - bottom);
   return {
     zoom: Math.min(0.76, usableHeight / (height * 0.8), (width - 64) / (height * 0.62)),

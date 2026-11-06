@@ -1,4 +1,4 @@
-# The vault — CD reveal
+# Monkey Island — dos revelaciones
 
 Experiencia de apertura hecha con Next.js, React Three Fiber y Three.js. Usa el modelo de Monkey Island y una animación procedural inspirada en la referencia de loot reveal: carga, anticipación, apertura, pausa de canto, impacto, cierre de caja con rebote y doble brillo final.
 
@@ -15,6 +15,12 @@ Abrir http://localhost:3000. Para producción estática: `npm run build` y `npm 
 
 Si la instalación de Sharp intenta compilar contra una instalación global de libvips, usar `SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm ci`.
 
+## Comparar las opciones
+
+El selector superior permite elegir **A · Tesoro** (apertura dorada) o **B · Murray** (levitación, cámara desde el lado opuesto, trayectoria espiral y apariciones fantasmales). Cambiar de opción cancela la secuencia y el audio anteriores.
+
+No hay botón de apertura: hacer clic en la caja cerrada, o enfocar el visor con Tab y presionar Enter/Espacio. Al terminar, el CD queda centrado en el canvas y se puede arrastrar; otro clic en la caja repite la animación. El aro central tiene un material translúcido separado, no el material opaco del disco.
+
 ## Ajustar la animación
 
 | Archivo | Responsabilidad |
@@ -22,6 +28,8 @@ Si la instalación de Sharp intenta compilar contra una instalación global de l
 | `components/motion.ts` | Timeline de 6,8 s, easing, rebotes y momento del impacto. |
 | `components/Scene.tsx` | Poses del modelo, cámara, materiales, foil y luces. No reproduce el clip del GLB. |
 | `components/RevealEffects.tsx` | Contorno de carga, rayos, partículas y anillo expansivo. |
+| `components/MurrayParticles.tsx` | Cuatro apariciones con chroma key por shader, solo en B; no edita la imagen fuente. |
+| `components/murray-motion.ts` | Trayectorias, entradas escalonadas y fade de Murray. |
 | `components/audio.ts` | Rumble, clic, whoosh y golpe sintetizados; comparte el tiempo de impacto. |
 | `components/Experience.tsx` | Estados, replay, sonido, diálogo y accesibilidad. |
 
@@ -48,3 +56,7 @@ npm run build
 Los tests verifican reposo, orden de fases, sincronización del impacto, overshoot y estabilidad numérica. La comprobación visual debe incluir apertura, replay, vista móvil, sonido y movimiento reducido.
 
 Las fuentes se sirven localmente; sus licencias están en `public/fonts/`. No se incluyen el video de referencia ni archivos privados. El arte y las marcas del juego pertenecen a sus titulares.
+
+## Imagen de Murray
+
+`public/textures/murray-reference.png` es la captura aportada por el usuario del GIF de Murray de Monkey Island Wiki. El shader oculta el fondo mostaza y recorta el encuadre por UV; el archivo original se mantiene sin editar. La captura es estática: se animan su posición, inclinación y opacidad, no la boca del GIF original. Las cuatro apariciones terminan antes de habilitar la inspección y se omiten con movimiento reducido.

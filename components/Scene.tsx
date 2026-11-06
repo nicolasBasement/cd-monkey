@@ -3,12 +3,12 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Environment, Lightformer, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { choreography, DURATION, framing, fittedZoom, smooth } from "./motion";
+import { choreography, DURATION, framing, fittedZoom, smooth, type RevealVariant } from "./motion";
 import RevealEffects from "./RevealEffects";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 
-type Props = { rotationKey: number; run: number; reduced: boolean; onReady: () => void; onComplete: () => void; onOpen: () => void };
-function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Props) {
+type Props = { variant: RevealVariant; rotationKey: number; run: number; reduced: boolean; onReady: () => void; onComplete: () => void; onOpen: () => void };
+function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onOpen }: Props) {
   const { scene } = useGLTF("/models/cd.glb");
   const rig = useRef<THREE.Group>(null);
   const glow = useRef<THREE.PointLight>(null);
@@ -37,6 +37,17 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
       if (!mesh.isMesh) return;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
+      // The clear hub is a separate mesh. Do not apply the opaque foil material.
+      if (mesh.name === "CD_low002" || mesh.name === "CD_low.002") {
+        mesh.material = new THREE.MeshPhysicalMaterial({
+          name: "Clear tinted hub",
+          color: variant === "murray" ? "#416869" : "#506583",
+          transparent: true, opacity: 0.18, depthWrite: false,
+          metalness: 0, roughness: 0.075, clearcoat: 1, clearcoatRoughness: 0.06,
+          envMapIntensity: 0.2, side: THREE.FrontSide,
+        });
+        return;
+      }
       const original = mesh.material as THREE.MeshPhysicalMaterial;
       const material = original.clone();
       if (material.name === "glass") {
@@ -71,7 +82,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
       rotations: discs.map(d => d.quaternion.clone()),
       scales: discs.map(d => d.scale.clone()),
     };
-  }, [scene, foil]);
+  }, [scene, foil, variant]);
   useEffect(() => { onReady(); }, [onReady]);
   useEffect(() => {
     time.current = 0; finished.current = false;
@@ -82,6 +93,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
   }, [run, model, gl]);
   const target = useMemo(() => new THREE.Vector3(), []);
   const bounds = useMemo(() => new THREE.Box3(), []);
+  const lookPoint = useMemo(() => new THREE.Vector3(), []);
   const projected = useMemo(() => new THREE.Vector3(), []);
   const axis = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const spin = useMemo(() => new THREE.Quaternion(), []);
@@ -91,7 +103,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
     if (!rig.current) return;
     if (run > 0) time.current = reduced ? DURATION : Math.min(time.current + delta, DURATION);
     const t = run > 0 ? time.current : 0;
-    const m = choreography(t);
+    const m = choreography(t, variant);
     model.top.quaternion.slerpQuaternions(model.closed, model.opened, m.lid);
     const follow = reduced ? 1 : 1 - Math.exp(-delta * 16);
     drag.current.currentYaw = THREE.MathUtils.lerp(drag.current.currentYaw, drag.current.yaw, follow);
@@ -100,6 +112,8 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
     manualRotation.setFromEuler(manualEuler);
     model.discs.forEach((disc, i) => {
       disc.position.copy(model.positions[i]);
+      disc.position.x += m.discX;
+      disc.position.z += m.discZ;
       disc.position.y += 0.18317 * m.disc - 0.035 * m.presentation;
       disc.scale.copy(model.scales[i]).multiplyScalar(1 + m.presentation * 0.16);
       // Turn the disc upright as it clears the tray, then hold it edge-on
@@ -111,12 +125,15 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
     });
     foil.value = -4 + m.foil * 8;
     const idle = reduced ? 0 : Math.sin(state.clock.elapsedTime * 0.65) * 0.025 * (1 - smooth((t - 5.4) / 1.1));
-    rig.current.rotation.set(0.06 + m.shake, -0.24 + m.shake * 1.8 + (!run ? pointer.x * 0.08 : 0), -0.10 + m.shake);
-    rig.current.position.y = -0.6 + idle - m.anticipation * 0.12;
+    rig.current.rotation.set(0.06 + m.shake, -0.24 + m.caseYaw + m.shake * 1.8 + (!run ? pointer.x * 0.08 : 0), -0.10 + m.shake);
+    rig.current.position.y = -0.6 + idle - m.anticipation * 0.12 + m.levitation;
     const scale = 1 - m.anticipation * 0.035 - m.camera * 0.28;
     rig.current.scale.setScalar(scale);
+    rig.current.updateWorldMatrix(true, true);
+    model.discs[0].getWorldPosition(discAnchor);
     const narrow = size.width < 700;
     target.set((narrow ? 1.1 : 2.3) - m.camera * (narrow ? 0.5 : 1.7), 5.6 - m.camera * 1.2, (narrow ? 8.5 : 6.3) + m.camera * 1.65);
+    if (variant === "murray") target.x = -2.3 + m.camera * 2.9;
     target.z += m.anticipation * 0.25 + m.cameraPunch - m.tension * 0.4;
     camera.position.lerp(target, reduced ? 1 : 1 - Math.exp(-delta * 5));
     const perspective = camera as THREE.PerspectiveCamera;
@@ -125,7 +142,8 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
     perspective.zoom = fit.zoom;
     perspective.setViewOffset(size.width, size.height, 0, fit.offsetY, size.width, size.height);
     perspective.updateProjectionMatrix();
-    camera.lookAt(0, 0.1 + m.camera * 0.8, 0);
+    lookPoint.set(0, 0.1 + m.camera * 0.8, 0).lerp(discAnchor, m.presentation);
+    camera.lookAt(lookPoint);
     camera.updateMatrixWorld();
     rig.current.updateWorldMatrix(true, true);
     // Exact mesh bounds, including lid overshoot and manual disc rotation.
@@ -142,7 +160,7 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
       extentX = Math.max(extentX, Math.abs(projected.x * size.width / 2));
       extentY = Math.max(extentY, Math.abs(-projected.y * size.height / 2 + fit.offsetY));
     }
-    const safeHeight = Math.max(140, size.height - 110 - (narrow ? 235 : 245));
+    const safeHeight = Math.max(140, size.height - 320);
     const correction = Math.min(1, (size.width - 48) / (2 * extentX), safeHeight / (2 * extentY));
     zoom.current = fittedZoom(fit.zoom, correction, reduced ? null : zoom.current, delta);
     perspective.zoom = zoom.current;
@@ -176,22 +194,22 @@ function Artifact({ rotationKey, run, reduced, onReady, onComplete, onOpen }: Pr
   }
   return <>
     <group ref={rig}
-      onClick={(e) => { e.stopPropagation(); if (!finished.current) onOpen(); }}
+      onClick={(e) => { e.stopPropagation(); if (!finished.current || !model.discs.includes(e.object)) onOpen(); }}
       onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp}
       onPointerCancel={pointerUp}
       onPointerOver={(e) => { if(finished.current && isDisc(e)) gl.domElement.style.cursor = "grab"; }}
       onPointerOut={() => { if(!drag.current.active) gl.domElement.style.cursor = finished.current ? "default" : "pointer"; }}>
       <group scale={22}><primitive object={model.scene} position={[-0.006, -0.075, -0.005]} /></group>
-      <pointLight ref={glow} position={[0, 0.4, 0]} color="#ffbb62" distance={8} />
+      <pointLight ref={glow} position={[0, 0.4, 0]} color={variant === "murray" ? "#8ce8da" : "#ffbb62"} distance={8} />
     </group>
-    <RevealEffects time={time} reduced={reduced} anchor={discAnchor} />
+    <RevealEffects variant={variant} time={time} reduced={reduced} anchor={discAnchor} />
   </>;
 }
 export default function Scene(props: Props) {
-  return <Canvas dpr={[1, 1.5]} camera={{ position: [2.3, 5.6, 6.3], fov: 37 }} gl={{ antialias: true, alpha: true }} shadows>
+  return <Canvas dpr={[1, 1.5]} camera={{ position: props.variant === "murray" ? [-2.3, 5.6, 6.3] : [2.3, 5.6, 6.3], fov: 37 }} gl={{ antialias: true, alpha: true }} shadows>
     <ambientLight intensity={0.75} />
     <directionalLight position={[3, 7, 5]} intensity={3} color="#e4e9ff" />
-    <directionalLight position={[-4, 2, -2]} intensity={5} color="#657bff" />
+    <directionalLight position={[-4, 2, -2]} intensity={5} color={props.variant === "murray" ? "#75dace" : "#657bff"} />
     <Suspense fallback={null}>
       <Environment resolution={256}>
         <Lightformer position={[0, 5, -2]} scale={[7, 3, 1]} intensity={4} color="#e4edff" rotation-x={Math.PI / 2} />

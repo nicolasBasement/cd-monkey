@@ -3,9 +3,12 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import * as THREE from "three";
-import { choreography, REVEAL_AT } from "./motion";
+import MurrayParticles from "./MurrayParticles";
+import { choreography, revealAt, DURATION, smooth, type RevealVariant } from "./motion";
 
-export default function RevealEffects({ time, reduced, anchor }: { time: { current: number }; reduced: boolean; anchor: THREE.Vector3 }) {
+export default function RevealEffects({ variant, time, reduced, anchor }: { variant: RevealVariant; time: { current: number }; reduced: boolean; anchor: THREE.Vector3 }) {
+  const haunted = variant === "murray";
+  const color = useMemo(() => haunted ? new THREE.Color(2.2, 5, 4.2) : new THREE.Color(4, 2.7, 1), [haunted]);
   const rays = useRef<THREE.Mesh>(null);
   const ring = useRef<THREE.Mesh>(null);
   const outline = useRef<THREE.Group>(null);
@@ -30,7 +33,7 @@ export default function RevealEffects({ time, reduced, anchor }: { time: { curre
     return texture;
   }, []);
   useEffect(() => () => sparkle.dispose(), [sparkle]);
-  const uniforms = useMemo(() => ({ uStrength: { value: 0 }, uTime: { value: 0 } }), []);
+  const uniforms = useMemo(() => ({ uStrength: { value: 0 }, uTime: { value: 0 }, uColor: { value: haunted ? new THREE.Color(3.5, 8, 6.7) : new THREE.Color(9, 5.5, 1.6) } }), [haunted]);
   const positions = useMemo(() => new Float32Array(160 * 3), []);
   const vertices = useMemo(() => Array.from({ length: 160 }, (_, i) => {
     const angle = i * 2.39996;
@@ -38,8 +41,8 @@ export default function RevealEffects({ time, reduced, anchor }: { time: { curre
   }), []);
   useFrame(({ camera }) => {
     const t = time.current;
-    const m = choreography(t);
-    const age = t - REVEAL_AT;
+    const m = choreography(t, variant);
+    const age = t - revealAt(variant);
     uniforms.uStrength.value = reduced ? 0 : m.rays;
     uniforms.uTime.value = Math.max(age, 0);
     camera.getWorldDirection(direction);
@@ -92,19 +95,20 @@ export default function RevealEffects({ time, reduced, anchor }: { time: { curre
         }
       });
       dust.current.geometry.attributes.position.needsUpdate = true;
-      (dust.current.material as THREE.PointsMaterial).opacity = age < 0 ? m.charge * 0.35 : Math.max(0, 1 - age / 3.1);
+      (dust.current.material as THREE.PointsMaterial).opacity = age < 0 ? m.charge * 0.35 : Math.max(0, 1 - age / 3.1) * (1 - smooth((t - DURATION + .4) / .4));
     }
   });
   return <>
+    {haunted && <MurrayParticles time={time} anchor={anchor} reduced={reduced} />}
     <group ref={outline} rotation={[0.06, -0.24, -0.10]}>
-      <Line points={[[-1.54, 0, -1.3], [1.45, 0, -1.3], [1.45, 0, 1.4], [-1.54, 0, 1.4], [-1.54, 0, -1.3]]} color={new THREE.Color(4, 2.2, 0.6)} lineWidth={2.2} transparent toneMapped={false} />
+      <Line points={[[-1.54, 0, -1.3], [1.45, 0, -1.3], [1.45, 0, 1.4], [-1.54, 0, 1.4], [-1.54, 0, -1.3]]} color={haunted ? color : new THREE.Color(4, 2.2, 0.6)} lineWidth={2.2} transparent toneMapped={false} />
     </group>
     <mesh ref={rays} position={[0, 1.8, -0.75]} renderOrder={-1}>
       <planeGeometry args={[12, 12]} />
       <shaderMaterial uniforms={uniforms} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false}
         vertexShader={`varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`}
         fragmentShader={`
-          varying vec2 vUv; uniform float uStrength; uniform float uTime;
+          varying vec2 vUv; uniform float uStrength; uniform float uTime; uniform vec3 uColor;
           void main(){
             vec2 p=(vUv-.5)*2.; float r=length(p); float a=atan(p.y,p.x);
             float streak=pow(max(0.,sin(a*11.+sin(a*7.)*1.8+uTime*.10)),12.);
@@ -112,20 +116,20 @@ export default function RevealEffects({ time, reduced, anchor }: { time: { curre
             float halo=exp(-r*r*65.)*.45;
             float alpha=(rays+halo)*uStrength*(1.-smoothstep(.65,1.,r));
             if(alpha < .001) discard;
-            gl_FragColor=vec4(vec3(9.,5.5,1.6),alpha);
+            gl_FragColor=vec4(uColor,alpha);
           }`} />
     </mesh>
     <mesh ref={ring} rotation-x={-Math.PI / 2} position={[0, -1.01, 0]} visible={false}>
       <ringGeometry args={[0.972, 1, 128]} />
-      <meshBasicMaterial color={[5, 3, 1]} transparent toneMapped={false} depthWrite={false} side={THREE.DoubleSide} />
+      <meshBasicMaterial color={haunted ? [2, 5, 4] : [5, 3, 1]} transparent toneMapped={false} depthWrite={false} side={THREE.DoubleSide} />
     </mesh>
-    <pointLight ref={light} distance={5} color="#ffe5ab" intensity={0} />
+    <pointLight ref={light} distance={5} color={haunted ? "#a9ffe2" : "#ffe5ab"} intensity={0} />
     <sprite ref={glint} visible={false}>
       <spriteMaterial map={sparkle} color={[5, 4.5, 3.5]} transparent depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} />
     </sprite>
     <points ref={dust} visible={false} frustumCulled={false}>
       <bufferGeometry><bufferAttribute attach="attributes-position" args={[positions, 3]} /></bufferGeometry>
-      <pointsMaterial map={sparkle} color={[4, 2.7, 1]} size={0.08} transparent depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} />
+      <pointsMaterial map={sparkle} color={color} size={0.08} transparent depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} />
     </points>
   </>;
 }
