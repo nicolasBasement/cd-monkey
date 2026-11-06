@@ -77,3 +77,6 @@ Apertura lenta y extracción recta bajo un haz diagonal dorado, con iluminación
 Pulido de La cripta: tres capas de niebla con ruido y bordes elípticos independientes; haz gaussiano suave, menos brillante, que se estrecha detrás del CD. El foco real sigue la extracción y la niebla se disipa entre 3.7 y 5.9 s. Las fases de luz, seguimiento y limpieza se verifican con tests.
 
 La cripta ahora usa un shader volumétrico de ray marching (32 muestras por rayo) en espacio 3D: dispersión con densidad de ruido 3D y niebla baja, sin planos orientados a cámara. Un prepass de profundidad de resolución acotada limita la integración contra la caja y el CD. El volumen se oculta durante ese prepass para evitar feedback. No simula sombras volumétricas de cada objeto.
+
+### E · Oro maldito
+Conserva exactamente la coreografía de Tesoro. Solo el cuerpo del CD recibe el shader de oro envejecido: reflejo de borde durante la salida, un único barrido dorado con tinte verde transitorio, y reflejo dependiente de la vista al girar. Mantiene el arte original y el hub transparente. No agrega loops de glitter ni pasadas de render; reduced motion omite los acentos temporales.

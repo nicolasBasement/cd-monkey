@@ -1,6 +1,6 @@
 export const DURATION = 6.8;
 export const REVEAL_AT = 3.65;
-export type RevealVariant = "treasure" | "murray" | "cursed" | "crypt";
+export type RevealVariant = "treasure" | "murray" | "cursed" | "crypt" | "gold";
 export const revealAt = (variant: RevealVariant) => variant === "crypt" ? 3.8 : variant === "cursed" ? 2.95 : variant === "murray" ? 3.8 : REVEAL_AT;
 export const clamp = (x: number) => Math.max(0, Math.min(1, x));
 export const smooth = (x: number) => { const t = clamp(x); return t * t * (3 - 2 * t); };
@@ -79,5 +79,15 @@ export function cryptAtmosphere(time: number, reduced = false) {
     track: smooth((t - 2.55) / 1.25),
     fog: reduced ? 0 : .22 * (1 - clear),
     beam: reduced ? .07 : light * (.32 - focus * .24),
+  };
+}
+
+// One material-only accent. No changes to the treasure choreography.
+export function goldFinish(time: number, reduced = false) {
+  const sweep = smooth((time - 4.05) / 1.5);
+  return {
+    sweep: -1.6 + sweep * 3.2,
+    reveal: reduced ? 0 : smooth((time - 3.95) / .3) * (1 - smooth((time - 5.45) / .4)),
+    rim: reduced ? 0 : smooth((time - 2) / .8) * (1 - smooth((time - 5.6) / .5)),
   };
 }

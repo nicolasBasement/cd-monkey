@@ -8,7 +8,7 @@ import MurrayParticles from "./MurrayParticles";
 import { choreography, revealAt, DURATION, smooth, type RevealVariant } from "./motion";
 
 export default function RevealEffects({ variant, time, reduced, anchor, caseRig }: { caseRig: RefObject<THREE.Group | null>; variant: RevealVariant; time: { current: number }; reduced: boolean; anchor: THREE.Vector3 }) {
-  const haunted = variant !== "treasure";
+  const haunted = variant !== "treasure" && variant !== "gold";
   const crypt = variant === "crypt";
   const cursed = variant === "cursed";
   const color = useMemo(() => haunted ? new THREE.Color(2.2, 5, 4.2) : new THREE.Color(4, 2.7, 1), [haunted]);

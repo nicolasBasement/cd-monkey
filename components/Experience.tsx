@@ -67,6 +67,7 @@ export default function Experience() {
         <button aria-pressed={variant === "murray"} onClick={() => selectVariant("murray")}><span>B</span> Murray</button>
         <button aria-pressed={variant === "cursed"} onClick={() => selectVariant("cursed")}><span>C</span> Maldito</button>
         <button aria-pressed={variant === "crypt"} onClick={() => selectVariant("crypt")}><span>D</span> La cripta</button>
+        <button aria-pressed={variant === "gold"} onClick={() => selectVariant("gold")}><span>E</span> Oro maldito</button>
       </div>
       <button className="sound-button" onClick={toggleSound} aria-pressed={sound} aria-label={sound ? "Desactivar sonido" : "Activar sonido"}>
         <span className={`wave ${sound ? "active" : ""}`} aria-hidden="true">{[0,1,2,3,4].map(i => <i key={i} />)}</span>
@@ -75,8 +76,8 @@ export default function Experience() {
     </header>
     <section className="intro">
       <div className="collection"><span /> Del archivo, a tus manos</div>
-      <h1>{variant === "crypt" ? "Hay leyendas que esperan en la oscuridad." : variant === "cursed" ? "No todos los tesoros duermen." : variant === "treasure" ? "Un clásico. Un tesoro." : "Hay tesoros que no descansan."}</h1>
-      <p>{variant === "crypt" ? "Seguí la luz. Encontrá tu tesoro." : variant === "cursed" ? "Rompé el sello. Liberá la aventura." : variant === "treasure" ? "Abrí la caja. Volvé a descubrirlo." : "Murray tiene algo que decir al respecto."}</p>
+      <h1>{variant === "gold" ? "No es oro todo lo que reluce." : variant === "crypt" ? "Hay leyendas que esperan en la oscuridad." : variant === "cursed" ? "No todos los tesoros duermen." : variant === "treasure" ? "Un clásico. Un tesoro." : "Hay tesoros que no descansan."}</h1>
+      <p>{variant === "gold" ? "Un tesoro con un toque de maldición." : variant === "crypt" ? "Seguí la luz. Encontrá tu tesoro." : variant === "cursed" ? "Rompé el sello. Liberá la aventura." : variant === "treasure" ? "Abrí la caja. Volvé a descubrirlo." : "Murray tiene algo que decir al respecto."}</p>
     </section>
     <section className="stage" data-phase={phase} tabIndex={phase === "ready" || opened ? 0 : -1}
       aria-label={opened ? "Disco 3D. Mové el mouse a izquierda o derecha para girarlo; en touch, arrastrá. También podés usar las flechas." : "Caja de Monkey Island en 3D. Hacé clic en la caja o presioná Enter para abrirla."}

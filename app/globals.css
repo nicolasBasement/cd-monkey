@@ -268,3 +268,12 @@ footer, footer button { font-size: 13px; }
   .variant-crypt h1 { font-size: 33px; max-width: 340px; }
   .intro { top: 120px; }
 }
+
+.variant-gold { --gold: #f0d293; background: radial-gradient(ellipse at 50% 46%, #293d43 0%, #152733 30%, #0c1826 55%, #080e20 85%); }
+@media(max-width:600px) {
+  .variant-switch { flex-wrap: wrap; justify-content: center; column-gap: 8px; row-gap: 1px; }
+  .variant-switch button { font-size: 16px; }
+  header { height: 116px; }
+  .intro { top: 135px; }
+  .variant-gold h1 { font-size: 34px; }
+}

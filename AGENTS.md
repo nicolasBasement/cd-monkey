@@ -7,3 +7,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## 3D reveal motion skill
+
+For reveal/unboxing choreography, camera, materials, or VFX polish, read
+`/home/nico/.codex/skills/3d-reveal-motion/SKILL.md`.
+Keep Monkey-specific preferences scoped to its reference notes; preserve approved variants.

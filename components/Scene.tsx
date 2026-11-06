@@ -3,9 +3,12 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Environment, Lightformer, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { choreography, DURATION, framing, fittedZoom, smooth, type RevealVariant } from "./motion";
+import { choreography, goldFinish, DURATION, framing, fittedZoom, smooth, type RevealVariant } from "./motion";
+import { applyGoldFinish } from "./gold-material";
 import RevealEffects from "./RevealEffects";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
+
+const modelBody = (mesh: THREE.Mesh) => mesh.name === "CD_low001" || mesh.name === "CD_low.001";
 
 type Props = { variant: RevealVariant; rotationKey: number; run: number; reduced: boolean; onReady: () => void; onComplete: () => void; onOpen: () => void };
 function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onOpen }: Props) {
@@ -15,6 +18,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
   const discAnchor = useMemo(() => new THREE.Vector3(), []);
   const time = useRef(0);
   const foil = useMemo(() => ({ value: -4 }), []);
+  const gold = useMemo(() => ({ sweep: { value: -1.6 }, reveal: { value: 0 }, rim: { value: 0 } }), []);
   const finished = useRef(false);
   const zoom = useRef<number | null>(null);
   const { camera, pointer, size, gl } = useThree();
@@ -61,7 +65,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
       if (mesh.name === "CD_low002" || mesh.name === "CD_low.002") {
         mesh.material = new THREE.MeshPhysicalMaterial({
           name: "Clear tinted hub",
-          color: variant !== "treasure" ? "#416869" : "#506583",
+          color: variant !== "treasure" && variant !== "gold" ? "#416869" : "#506583",
           transparent: true, opacity: 0.18, depthWrite: false,
           metalness: 0, roughness: 0.075, clearcoat: 1, clearcoatRoughness: 0.06,
           envMapIntensity: 0.2, side: THREE.FrontSide,
@@ -91,6 +95,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
         };
         material.customProgramCacheKey = () => "cd-foil-v1";
       }
+      if (variant === "gold" && modelBody(mesh)) applyGoldFinish(material, mesh.geometry, gold);
       mesh.material = material;
     });
     return {
@@ -102,7 +107,7 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
       rotations: discs.map(d => d.quaternion.clone()),
       scales: discs.map(d => d.scale.clone()),
     };
-  }, [scene, foil, variant]);
+  }, [scene, foil, gold, variant]);
   useEffect(() => { onReady(); }, [onReady]);
   useEffect(() => {
     time.current = 0; finished.current = false; hoverX.current = null;
@@ -147,6 +152,10 @@ function Artifact({ variant, rotationKey, run, reduced, onReady, onComplete, onO
 
     });
     foil.value = -4 + m.foil * 8;
+    const finish = goldFinish(t, reduced);
+    gold.sweep.value = finish.sweep;
+    gold.reveal.value = finish.reveal;
+    gold.rim.value = finish.rim;
     const idle = reduced ? 0 : Math.sin(state.clock.elapsedTime * 0.65) * 0.025 * (1 - smooth((t - 5.4) / 1.1));
     rig.current.rotation.set(0.06 + m.shake, -0.24 + m.caseYaw + m.shake * 1.8 + (!run ? pointer.x * 0.08 : 0), -0.10 + m.shake);
     rig.current.position.x = (narrow ? 0 : -2.6) * m.presentation;

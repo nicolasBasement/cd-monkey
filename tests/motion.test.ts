@@ -187,3 +187,19 @@ test("crypt light precedes opening and atmosphere clears before the CTA", async 
     for(const value of Object.values(a)) assert.ok(Number.isFinite(value));
   }
 });
+test("gold keeps treasure motion and adds only a bounded, non-looping material accent", async () => {
+  const { goldFinish } = await import("../components/motion.ts");
+  for(let t=0;t<=DURATION;t+=.025) {
+    assert.deepEqual(choreography(t,"gold"),choreography(t,"treasure"));
+    const g=goldFinish(t);
+    assert.ok(g.reveal>=0 && g.reveal<=1);
+    assert.ok(g.rim>=0 && g.rim<=1);
+    assert.ok(g.sweep>=-1.6 && g.sweep<=1.6);
+    assert.equal(goldFinish(t,true).reveal,0);
+    assert.equal(goldFinish(t,true).rim,0);
+  }
+  assert.ok(goldFinish(4.7).reveal>.99);
+  assert.equal(goldFinish(DURATION).reveal,0);
+  assert.equal(goldFinish(DURATION).rim,0);
+  assert.deepEqual(goldFinish(DURATION),goldFinish(DURATION+20));
+});
