@@ -105,7 +105,7 @@ export default function RevealEffects({ variant, time, reduced, anchor, caseRig 
     }
   });
   return <>
-    {crypt && <CryptAtmosphere time={time} reduced={reduced} />}
+    {crypt && <CryptAtmosphere time={time} reduced={reduced} anchor={anchor} />}
     {variant === "murray" && <MurrayParticles time={time} anchor={anchor} reduced={reduced} />}
     <group ref={outline} matrixAutoUpdate={false}>
       <Line points={[[-1.54, 0, -1.3], [1.45, 0, -1.3], [1.45, 0, 1.4], [-1.54, 0, 1.4], [-1.54, 0, -1.3]]} color={haunted ? color : new THREE.Color(4, 2.2, 0.6)} lineWidth={2.2} transparent toneMapped={false} />

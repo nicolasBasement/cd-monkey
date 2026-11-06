@@ -65,3 +65,19 @@ export function fittedZoom(base: number, correction: number, previous: number | 
   const follow = 1 - Math.exp(-Math.max(0, delta) * 4);
   return Math.min(safe, previous + (safe - previous) * follow);
 }
+
+// Light arrives before the lid opens; mist clears as the final framing settles.
+export function cryptAtmosphere(time: number, reduced = false) {
+  const t = Math.max(0, time);
+  const clear = smooth((t - 3.7) / 2.2);
+  const focus = smooth((t - 3.8) / 2.3);
+  const light = smooth((t - .1) / 1.1);
+  return {
+    clear,
+    focus,
+    light,
+    track: smooth((t - 2.55) / 1.25),
+    fog: reduced ? 0 : .22 * (1 - clear),
+    beam: reduced ? .07 : light * (.32 - focus * .24),
+  };
+}

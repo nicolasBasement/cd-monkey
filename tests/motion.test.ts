@@ -171,3 +171,19 @@ test("crypt opens slowly, lifts before tilting, and avoids explosive motion", ()
     for(const value of Object.values(m)) assert.ok(Number.isFinite(value));
   }
 });
+test("crypt light precedes opening and atmosphere clears before the CTA", async () => {
+  const { cryptAtmosphere } = await import("../components/motion.ts");
+  assert.equal(cryptAtmosphere(0).beam,0);
+  assert.equal(cryptAtmosphere(1.3).light,1);
+  assert.equal(cryptAtmosphere(2.55).track,0);
+  assert.equal(cryptAtmosphere(3.8).track,1);
+  assert.equal(cryptAtmosphere(6.1).fog,0);
+  assert.equal(cryptAtmosphere(DURATION).focus,1);
+  assert.equal(cryptAtmosphere(DURATION,true).fog,0);
+  for(let t=0;t<DURATION;t+=.03) {
+    const a=cryptAtmosphere(t);
+    assert.ok(a.fog>=0 && a.fog<=.22);
+    assert.ok(a.beam>=0 && a.beam<=.32);
+    for(const value of Object.values(a)) assert.ok(Number.isFinite(value));
+  }
+});
